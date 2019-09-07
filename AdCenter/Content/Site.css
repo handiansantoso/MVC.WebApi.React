@@ -1,0 +1,33 @@
+﻿body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+.status-cell .reason {
+    font-size: 0.8em;
+    margin-top: 0.3em;
+    min-height: 0.8em;
+    color: #777;
+    letter-spacing: normal;
+    white-space: normal;
+}
+.status-pending, .status-inactive, .status-parent-inactive {
+    color: #999;
+}
+.status-approved, .status-active {
+    color: #8adc8a;
+}
+

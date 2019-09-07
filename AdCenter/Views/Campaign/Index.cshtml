@@ -1,0 +1,659 @@
+﻿@{ 
+    ViewBag.Title = "Dashboard";
+}
+<h3><span class="glyphicon glyphicon-tasks" aria-hidden="true"></span> Campaign</h3>
+<div id="reactContent">
+
+</div>
+<script type="text/javascript">
+    var $global = window.$global = {};
+    $global.deliveryTypes = @Html.Raw(ViewBag.DeliveryTypes);
+    $global.campaigns = @Html.Raw(ViewBag.Campaigns);
+    $global.uriPath = @Html.Raw(ViewBag.UriPath);
+    @if (User.IsInRole("Admin"))
+    {
+        <text>
+        $global.users = @Html.Raw(ViewBag.Users);
+        </text>
+    }
+</script>
+<script type="text/babel">
+    class App extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                filteredData: $global.campaigns,
+                originalData: $global.campaigns,
+                filterStatus: '',
+                filterDeliveryType: '-1'
+            }
+        }
+        render(){
+            return(
+                <div>
+                    <CloneModal ref="cloneModal" onSuccess={this._refresh.bind(this)} />
+                    <DeleteModal ref="deleteModal" delete={this._deleteCampaign.bind(this)}/>
+                    <CampaignModal ref="campaignModal"  onSuccess={this._refresh.bind(this)} />
+                    <div className="well well-small">    
+                        <div className="form-inline btn-toolbar">                                
+                            <div className="input-group">
+                                <span className="input-group-addon">Status</span>
+                                <select className="form-control span2" name="filterStatus" onChange={(event) => this._filterData(event)}>
+                                    <option value="">All</option>
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <span className="input-group-addon">Delivery Type</span>
+                                <DeliveryTypeSelect name="filterDeliveryType" type="filter" onChange={(event) => this._filterData(event)} />
+                            </div>
+                            <div className="form-inline pull-right">
+                                <button type="button" className="btn btn-primary pull-left" onClick={this._showCreateCampaignDialog.bind(this)}><span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;New</button>
+                            </div>                            
+                        </div>                         
+                    </div>
+                    
+                    <div  className="panel panel-default">
+                        <CampaignTable data={this.state.filteredData} duplicate={this._showDuplicateCampaign.bind(this)} edit={this._showEditCampaign.bind(this)} updateStatus={this._updateStatus.bind(this)} delete={this._showDeleteModal.bind(this)} />
+                    </div>
+                </div>
+                );
+        }
+        _updateStatus(id,value){
+            let m = {id: id, value: value };
+            let model = JSON.stringify(m);
+            //console.log(m);
+            $.ajax({
+                url: $global.uriPath + '/Campaign/UpdateStatus',
+                type: 'POST',
+                data: model,
+                contentType:"application/json; charset=utf-8"
+            }).done((data) => {
+                let original = this.state.originalData;
+                let index = _.findIndex(original,(x) => { return x.Id == id });
+                original[index] = data;
+                this.setState({originalData : original}, ()=>{
+                    this._filterData();
+                });
+                toastr.success('Status for campaign has been updated.', 'Update Status');
+            }).fail((xhr, textStatus, error) => {
+                toastr.error('Unable to update status. Please refresh and try again.','Update Error');
+            });                 
+        }
+        _showDeleteModal(item) {
+            this.refs.deleteModal._show(item);
+        }
+        _deleteCampaign(item) {
+            let m = {id: item.Id};
+            let id = item.Id;
+            let name = item.Name;
+            let model = JSON.stringify(m);
+            @if(User.IsInRole("Admin")) {      
+                <text>      
+                $.ajax({
+                    url: $global.uriPath + '/Campaign/DeleteCampaign',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                }).done((data) => {
+                    let original = this.state.originalData;
+                    let index = _.findIndex(original,(x) => { return x.Id == id });
+                    original.splice(index,1);
+                    this.setState({originalData : original}, ()=>{
+                        this._filterData();
+                    });
+                    toastr.success('Campaign ' + name + ' has been deleted.', 'Delete Status');
+                    this.refs.deleteModal._hide();
+                    $('body').removeClass('modal-open');
+                    $('.modal-backdrop').remove();
+                }).fail((xhr, textStatus, error) => {
+                    toastr.error('Unable to delete campaign. Please refresh and try again.','Delete Error');
+                });
+                </text>
+            }    
+        }
+        _showCreateCampaignDialog(){
+            this.refs.campaignModal._showCreate();
+        }
+        _showEditCampaign(item) {
+            this.refs.campaignModal._showEdit(item);
+        }
+        _showDuplicateCampaign(ID,Name){
+            this.refs.cloneModal._show(ID,Name);
+        }
+        _refreshCampaignData() {
+            $.get($global.uriPath + '/Campaign/Campaigns', function(data){
+                this.setState({
+                    originalData: data                    
+                },()=>{
+                    this._filterData();
+                });
+            }.bind(this));
+        }
+        _refresh(){
+            this._refreshCampaignData();
+            this.refs.cloneModal._hide();
+            this.refs.campaignModal._hide();
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+        }
+        _filterData(e){
+            let name = '';
+            let value = '';
+            if(typeof e !== 'undefined'){
+                name = e.target.name;
+                value = e.target.value;
+            }            
+
+            let filtered = [];
+            let original = this.state.originalData;            
+            let status = this.state.filterStatus;
+            let deliveryType = this.state.filterDeliveryType;
+            if(typeof e !== 'undefined')
+            {
+                switch(name)
+                {
+                    case 'filterStatus':
+                        status = value;
+                        break;
+                    case 'filterDeliveryType':
+                        deliveryType = value;
+                        break;
+                }
+            }
+                
+            if(status == '' && deliveryType == '-1')
+                filtered = original;
+            else {
+                if(status != '' && deliveryType == '-1')
+                    filtered = original.filter(c=>c.Active == (status == "true" ? true : false));
+                if(status == '' && deliveryType != '-1')
+                    filtered = original.filter(c=>c.DeliveryType == deliveryType);
+                if(status != '' && deliveryType != '-1')
+                    filtered = original.filter(c=>c.Active == (status == "true" ? true : false) && c.DeliveryType == deliveryType);    
+            }
+            this.setState({
+                filteredData: filtered
+            });
+            if(typeof e !== 'undefined')
+                this.setState({[name]:value});
+        }
+    }
+
+    const DeliveryTypeSelect = (props) => {
+        let options = $global.deliveryTypes.map((d) => {
+            if(props.type == 'filter' && d.Value == -1)
+                    return(<option key={d.Value} value={d.Value}>- All Delivery Type -</option>);
+                else
+                    return(<option key={d.Value} value={d.Value}>{d.Key}</option>);
+        });
+        return (
+            <select className="form-control" name={props.name} value={props.value} onChange={props.onChange}>
+                {options}
+            </select>
+        );
+    }
+    const UserSelect = (props) => {
+        let type = props.type;
+        let options = $global.users.map(function(d) {
+            return(<option key={d.Id} value={d.Id}>{d.UserName}</option>);
+        });
+        return (
+            <select className="form-control" name={props.name} value={props.value} onChange={props.onChange}>
+                {options}
+            </select>
+        );
+    }
+    const CampaignTable = (props) => {
+        if(props.data.length == 0)
+            return (<span>There is no existing campaign records.</span>);
+        let rows = props.data.map((d)=>
+                <tr key={d.Id}>
+                    <td>{d.Id}</td>
+                    <td><a href={$global.uriPath + '/AdGroup/Index/' + d.Id }>{d.Name}</a></td>
+                    <td>
+                        <div id="toggles">
+                            <input type="checkbox" name="active" className="ios-toggle" id={"checkbox_" + d.Id} onChange={props.updateStatus.bind(this,d.Id,!d.Active)} defaultChecked={d.Active} />
+                            <label htmlFor={"checkbox_" + d.Id} className="checkbox-label" data-off="" data-on=""></label>
+                        </div>
+                    </td>
+                    <td>
+                        <div className="status-cell">
+                            <div className="status">
+                                <span className={ d.Status == 'Active' ? 'status-active' : d.Status == 'Inactive' ? 'status-inactive' : 'status-pending' }>
+                                    <i className={'fa fa-fw ' + (d.Status == 'Active' || d.Status == 'Inactive' ? 'fa-circle' : 'fa-minus-circle')} />
+                                </span>
+                                {d.Status}
+                            </div>
+                            <div className="reason hidden-xs">
+                                {d.Reason}
+                            </div>
+                        </div>
+                    </td>
+                    <td>{d.DeliveryTypeName}</td>
+                    <td>{d.DailyBudget == 0 ? 'Unlimited' : '$ ' + d.DailyBudget }</td>
+                    <td>{d.OverallBudget == 0 ? 'Unlimited' : '$ ' + d.OverallBudget }</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>$ 0.00</td>
+                    <td><a className="glyphicon glyphicon-duplicate" href="#" onClick={props.duplicate.bind(this,d.Id,d.Name)} ></a>&nbsp;
+                        <a className="glyphicon glyphicon-edit" href="#" onClick={props.edit.bind(this,d)}  />&nbsp;
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a className="glyphicon glyphicon-trash" href="#" onClick={props.delete.bind(this,d)} />
+                        }
+                    </td>
+                </tr>
+            );
+            return (
+                
+                <table className="table table-bordered table-responsive">
+                    <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Name</td>
+                            <td>Active</td>
+                            <td></td>
+                            <td>Delivery Type</td>                            
+                            <td>Daily Budget</td>
+                            <td>Overal Budget</td>
+                            <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Searches</td>
+                            <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Impressions (Pop)</td>                            
+                            <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Spend</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows}
+                    </tbody>
+                </table>    
+            );
+    }
+    
+    class CampaignModal extends React.Component{
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id : -1,
+                    name : '',
+                    overallBudget : 0,
+                    dailyBudget : 0,
+                    deliveryType : '1',
+                    active : true,
+                    advertiserId: 1
+                },
+                show: false,
+                mode: 'Create',
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    overallBudget : '',
+                    dailyBudget : '',
+                    deliveryType : ''
+                }
+            }
+        }
+        render(){
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog"  data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button"className="close" data-dismiss="modal" aria-label="Close"  onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">{this.state.mode} Campaign</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className='form-group row'>
+                                <div className='col-sm-12'>
+                                    <label className="label label-danger">{this.state.errorMessage}</label>
+                                </div>
+                            </div>
+                            <div className={'form-group row ' + this.state.formErrors.name}>
+                                <label htmlFor="inputName" className="col-sm-3 col-form-label">Name</label>
+                                <div className="col-sm-9">
+                                    <input className='form-control' name="name" onChange={(event) => this._handleUserInput(event)} placeholder="Campaign Name" value={this.state.model.name} />
+                                </div>
+                            </div>
+                            <div className={'form-group row '}>
+                                <label htmlFor="inputName" className="col-sm-3 col-form-label">Active</label>
+                                <div className="col-sm-9">
+                                    <div id="toggles">
+                                        <input type="checkbox" name="active" id="checkbox1" className="ios-toggle" onChange={(event) => this._handleUserInput(event)} defaultChecked={this.state.model.active} />
+                                        <label htmlFor="checkbox1" className="checkbox-label" data-off="inactive" data-on="active"></label>
+                                    </div>
+                                </div>
+                            </div>                          
+                            <div className={'form-group row ' + this.state.formErrors.deliveryType}>
+                                <label htmlFor="deliveryType" className="col-sm-3 col-form-label">Delivery Type</label>
+                                <div className="col-sm-9">
+                                    <DeliveryTypeSelect name="deliveryType" type="edit" value={this.state.model.deliveryType} onChange={(event) => this._handleUserInput(event)}/>
+                                </div>
+                            </div>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <div className='form-group row '>
+                                    <label htmlFor="deliveryType" className="col-sm-3 col-form-label">Advertiser</label>
+                                    <div className="col-sm-9">
+                                        <UserSelect name="advertiserId" type="edit" value={this.state.model.advertiserId} onChange={(event) => this._handleUserInput(event)}/>
+                                    </div>
+                                </div>
+                            }                            
+                            <div className="form-group row">
+                                <label htmlFor="dailyBudget" className="col-sm-3 col-form-label">Daily Budget</label>
+                                <div className={'col-sm-6' + this.state.formErrors.dailyBudget}>
+                                <div className="input-group">
+                                    <span className="input-group-addon">$</span>
+                                    <input className="form-control"  type="number" step="0.01" name="dailyBudget" value={this.state.model.dailyBudget} onChange={(event) => this._handleUserInput(event)} />
+                                    <span className="input-group-btn">
+                                        <button className="btn btn-default" type="button" onClick={this._unlimitedClicked.bind(this,'daily')}>
+                                            <i className={"fa " + (this.state.model.dailyBudget == 0 ? " fa-check-square-o" : " fa-square-o")} aria-hidden="true"></i><span>Unlimited</span>
+                                        </button>
+                                    </span>
+                                </div>
+                                </div>
+                            </div>
+                            <div className="form-group row">
+                                <label htmlFor="overallBudget" className="col-sm-3 col-form-label">Overall Budget</label>
+                                <div className={'col-sm-6' + this.state.formErrors.overallBudget}>
+                                    <div className="input-group">
+                                        <span className="input-group-addon">$</span>
+                                        <input className="form-control"  type="number" step="0.01" name="overallBudget" value={this.state.model.overallBudget} onChange={(event) => this._handleUserInput(event)} />
+                                        <span className="input-group-btn">
+                                            <button className="btn btn-default" type="button" onClick={this._unlimitedClicked.bind(this,'overall')}>
+                                                <i className={"fa " + (this.state.model.overallBudget == 0 ? " fa-check-square-o" : " fa-square-o")} aria-hidden="true"></i><span>Unlimited</span>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this._update.bind(this)}>Save changes</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.name == 'active' ? e.target.checked : e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+        }
+
+        _unlimitedClicked(budgeType) {
+            var model = this.state.model;
+            var formErrors = this.state.formErrors;
+            if(budgeType == 'daily')
+            {
+                model.dailyBudget = 0;
+                formErrors.dailyBudget = '';
+            }                
+            else
+            {
+                model.overallBudget = 0;
+                formErrors.overallBudget = '';
+            }                 
+            this.setState({
+                model: model,
+                formErrors: formErrors
+            });
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'dailyBudget' :
+                    fieldErrors.dailyBudget = $.trim(value) === '' ? ' has-error' : parseFloat(value) < 0 ? ' has-error' : '' ;
+                    break;
+                case 'overallBudget' :
+                    fieldErrors.overallBudget = $.trim(value) === '' ? ' has-error' : parseFloat(value) < 0 ? ' has-error' : '';
+                    if(fieldErrors.dailyBudget == '' & fieldErrors.overallBudget == ''){
+                        if(this.state.model.dailyBudget > 0 && this.state.model.overallBudget > 0)
+                            fieldErrors.overallBudget = this.state.model.dailyBudget > this.state.model.overallBudget ? ' has-error' : '';
+                    }
+                    break; 
+                case 'deliveryType' :
+                    fieldErrors.deliveryType = value === '-1' ? ' has-error' : '';
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors});
+        }
+        _formIsValid() {
+            return this.state.formErrors.name === ''             
+            && this.state.formErrors.deliveryType === ''
+            && this.state.formErrors.overallBudget === ''
+            && this.state.formErrors.dailyBudget === '';
+        }
+        _isValid() {
+            _.each(this.state.model,(i,e) =>{
+                this._validateField(e,this.state.model[e]);
+            });
+            return this._formIsValid();
+        }
+        componentDidUpdate() {
+            let $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+        _hide() {
+            this.setState({show:false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _update() {
+            if(this._isValid()) {
+                let onSuccess = this.props.onSuccess;
+                    
+                let model = JSON.stringify(this.state.model);
+                console.log(model);
+                $.ajax({
+                    url: $global.uriPath + '/Campaign/Campaign',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                    //dataType:"json"
+                }).done(function(data){
+                    onSuccess();
+                }).fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });                
+            }
+        }
+        _showCreate(){
+            this.setState({
+                model: {
+                    id : -1,
+                    name : '',
+                    overallBudget : 0,
+                    dailyBudget : 0,
+                    deliveryType : '1',
+                    active: true,
+                    advertiserId: 0
+                },
+                show: true,
+                mode: 'Create',
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    overallBudget : '',
+                    dailyBudget : '',
+                    deliveryType : ''
+                }
+            });
+        }
+        _showEdit(item){
+            this.setState({
+                model: {
+                    id : item.Id,
+                    name : item.Name,
+                    overallBudget : item.OverallBudget,
+                    dailyBudget : item.DailyBudget,
+                    deliveryType : item.DeliveryType,
+                    active : item.Active,
+                    advertiserId: item.AdvertiserId
+                },
+                show: true,
+                mode: 'Create',
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    overallBudget : '',
+                    dailyBudget : '',
+                    deliveryType : ''
+                }
+            });
+        }
+    }
+    class CloneModal extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                id: -1,
+                name: '',
+                show: false,
+                nameError: '',
+                errorMessage: ''
+            };
+        }
+        render() {
+            if(!this.state.show)
+                return null;
+            return (
+                <div className="modal fade" role="dialog" data-backdrop="static">
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button"className="close" data-dismiss="modal" aria-label="Close" onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Duplicate Campaign</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className="row">
+                                <div className="col-sm-12">
+                                    <label className="label label-danger">{this.state.errorMessage}</label>
+                                </div>
+                                <div className={"form-horizontal col-sm-12 " + this.state.nameError }>
+                                    <div className="control-group">
+                                        <label className="control-label">New Name</label>
+                                        <input name='name' className="form-control" value={this.state.name} onChange={this.onChange.bind(this)} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">                            
+                            <button type="button" className="btn btn-primary" onClick={this._duplicateCampaign.bind(this,false)}><span className="glyphicon glyphicon-th-large" />Just this Campaign</button>
+                            <button type="button" className="btn btn-success" onClick={this._duplicateCampaign.bind(this,true)}><span className="glyphicon glyphicon-th" />This Campaign and its Descendants</button>
+                            <button type="button" className="btn btn-default" onClick={this._hide.bind(this)} data-dismiss="modal">Close</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _show(id,name) {
+            this.setState({show: true,id:id,name:name,nameError: '',errorMessage: ''});
+        }
+        _hide() {
+            this.setState({show: false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _duplicateCampaign(duplicateAll) {
+
+            if(this.state.nameError == ''){
+                let onSuccess = this.props.onSuccess;
+                let name = $.trim(this.state.name);
+                $.post($global.uriPath + "/Campaign/Clone",{id:this.state.id,name:name,fullCopy:duplicateAll})
+                .done(function(data){
+                    onSuccess();
+                })
+                .fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });
+            }
+        }
+        onChange(event){
+            this.setState({
+                name: event.target.value
+            });
+            let errorClass = $.trim(event.target.value) == '' ? 'has-error' : '';
+            this.setState({ nameError : errorClass});            
+        }
+        componentDidUpdate() {
+            var $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+    }
+    class DeleteModal extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                show: false,
+                data: ''
+            }
+        }
+        render(){
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog" data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Delete Campaign</h4>
+                        </div>
+                        <div className="modal-body">
+                            <label className="alert alert-warning">Are you sure to delete "{this.state.data.Name}" ?</label>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this.props.delete.bind(this,this.state.data)}>Confirm</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _show(item) {
+            this.setState({ 
+                show: true,
+                data: item
+            });
+        }
+
+        _hide() {
+            this.setState({show: false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        componentDidUpdate() {
+            var $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+    }
+    ReactDOM.render(
+        <App />, document.getElementById('reactContent')
+    );
+</script>

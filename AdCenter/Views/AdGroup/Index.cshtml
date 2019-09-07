@@ -1,0 +1,2581 @@
+﻿@{ 
+    ViewBag.Title = "Dashboard";
+}
+<style>
+    div.dayparts-editor table.table.table-outlined {
+        border:1px solid #ccc;
+        border-radius:12px;
+        overflow:hidden;
+        border-collapse: separate;
+    }
+
+    div.dayparts-editor table.dayparts {
+        width: auto;
+        margin-top: 10px;
+    }
+    td.hour-label{
+        background: #eee !important;
+    }
+    div.dayparts-editor table.table > tfoot {
+        background: #eee;
+        overflow: hidden;
+    }
+    
+    .dayparts td.cell-label {
+        padding:3px;
+        -webkit-touch-callout:none;
+        -webkit-user-select:none;
+        -khtml-user-select:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none
+    }
+    .dayparts td.cell-label.day-label,.dayparts td.cell-label.hour-label {
+        cursor:pointer;
+        background:#E2F0FF;
+        text-align:right;
+        font-size:90%
+    }
+    .dayparts td.cell-label.presets-label {
+        text-align:right;
+        padding:0 5px;
+        vertical-align:middle
+    }
+    .dayparts td.dayparts-cell {
+        width:3.6%;
+        padding:0;
+        margin:0;
+        cursor:pointer;
+        line-height:1px;
+        font-size:1px;
+        background:linear-gradient(#DAB,#EBC)
+    }
+    .dayparts td.dayparts-cell.hour-active{
+        background:linear-gradient(#A0E674,#77AD3A)
+    }
+    .dayparts td.dayparts-cell.dragging-active{
+        background:linear-gradient(#D1EAB4,#A7CE7B)
+    }
+    .dayparts td.dayparts-cell.dragging-inactive{
+        background:#A71515
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell.hour-inactive{
+        background:#e64f4b;background:-webkit-gradient(linear, 0 0, 0 100%, from(#ec7b78), to(#e64f4b));
+        background:-webkit-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-o-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-moz-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-ms-linear-gradient(top, #ec7b78, #e64f4b);
+        background:linear-gradient(to bottom, #ec7b78, #e64f4b);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#ec7b78', EndColorStr='#e64f4b', GradientType=0)
+    }
+    .dayparts td.cell-label.day-label,.dayparts td.cell-label.hour-label{
+        background:#eee !important
+    }
+    .dayparts td.cell-label.day-label {
+        padding-left:1em;padding-right:.5em
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell {
+        transition:none;
+        background:#ef918f;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#f6bdbc), to(#ef918f));
+        background:-webkit-linear-gradient(top, #f6bdbc, #ef918f);
+        background:-o-linear-gradient(top, #f6bdbc, #ef918f);
+        background:-moz-linear-gradient(top, #f6bdbc, #ef918f);
+        background:-ms-linear-gradient(top, #f6bdbc, #ef918f);
+        background:linear-gradient(to bottom, #f6bdbc, #ef918f);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#f6bdbc', EndColorStr='#ef918f', GradientType=0);
+        height:14px;width:22px
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell.hour-active{
+        background:#63d063;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#8adc8a), to(#63d063));
+        background:-webkit-linear-gradient(top, #8adc8a, #63d063);
+        background:-o-linear-gradient(top, #8adc8a, #63d063);
+        background:-moz-linear-gradient(top, #8adc8a, #63d063);
+        background:-ms-linear-gradient(top, #8adc8a, #63d063);
+        background:linear-gradient(to bottom, #8adc8a, #63d063);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#8adc8a', EndColorStr='#63d063', GradientType=0)
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell.dragging-active{
+        background:#92de92;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#b9eab9), to(#92de92));
+        background:-webkit-linear-gradient(top, #b9eab9, #92de92);
+        background:-o-linear-gradient(top, #b9eab9, #92de92);
+        background:-moz-linear-gradient(top, #b9eab9, #92de92);
+        background:-ms-linear-gradient(top, #b9eab9, #92de92);
+        background:linear-gradient(to bottom, #b9eab9, #92de92);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#b9eab9', EndColorStr='#92de92', GradientType=0)
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell.dragging-inactive {
+        background:#6c3837;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#8e4a48), to(#6c3837));
+        background:-webkit-linear-gradient(top, #8e4a48, #6c3837);
+        background:-o-linear-gradient(top, #8e4a48, #6c3837);
+        background:-moz-linear-gradient(top, #8e4a48, #6c3837);
+        background:-ms-linear-gradient(top, #8e4a48, #6c3837);
+        background:linear-gradient(to bottom, #8e4a48, #6c3837);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#8e4a48', EndColorStr='#6c3837', GradientType=0)
+    }
+    div.dayparts-editor table.dayparts tfoot>tr>td {
+        margin:0;padding:0 !important;height:12px
+    }
+    .dayparts-editor .hour-inactive,.note .hour-inactive,.dayparts-editor .hour-active,.note .hour-active {
+        background:#e64f4b;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#ec7b78), to(#e64f4b));
+        background:-webkit-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-o-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-moz-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-ms-linear-gradient(top, #ec7b78, #e64f4b);
+        background:linear-gradient(to bottom, #ec7b78, #e64f4b);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#ec7b78', EndColorStr='#e64f4b', GradientType=0);
+        height:14px;
+        width:22px;
+        border:1px solid #ccc !important
+    }
+    div.dayparts-editor table.dayparts td.am-label,table.dayparts td.hour-11,table.dayparts td.hour-label-11 {
+        border-right:1px solid #ccc !important;
+        border-right-width:2px !important
+    }
+    div.dayparts-editor table.dayparts td.hour-23,table.dayparts td.hour-label-23 {
+        border-right:1px solid #ccc !important;
+        border-right-width:2px !important
+    }
+    div.dayparts-editor table.dayparts td.hour-0,table.dayparts td.hour-label-0 {
+        border-left:1px solid #ccc !important;
+        border-left-width:2px !important
+    }
+    div.dayparts-editor table.dayparts td.day-6 {
+        border-bottom:1px solid #ccc !important;
+        border-bottom-width:2px !important
+    }
+    .dayparts-editor .hour-active,.note .hour-active {
+        background:#63d063;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#8adc8a), to(#63d063));
+        background:-webkit-linear-gradient(top, #8adc8a, #63d063);
+        background:-o-linear-gradient(top, #8adc8a, #63d063);
+        background:-moz-linear-gradient(top, #8adc8a, #63d063);
+        background:-ms-linear-gradient(top, #8adc8a, #63d063);
+        background:linear-gradient(to bottom, #8adc8a, #63d063);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#8adc8a', EndColorStr='#63d063', GradientType=0)
+    }
+    .dayparts-editor div.hour-inactive,.note div.hour-inactive,.dayparts-editor div.hour-active,.note div.hour-active {
+        vertical-align:middle;
+        display:inline-block
+    }
+    .dayparting-cell>table{
+        pointer-events:none
+    }
+    .dayparting-cell>table>thead>tr:first-child{
+        display:none
+    }
+    div.dayparts-editor table.table td {
+        border-top:0 !important;
+        border-left:0;
+        position:relative;
+        border-bottom-width:0;
+        transition:background-color 1s,border-bottom-width 1s
+    }
+    .text-toogle[aria-expanded=false] .text-expanded {
+        display: none;
+    }
+    .text-toogle[aria-expanded=true] .text-collapsed {
+        display: none;
+    }
+    .tab-pane {
+        margin-left: 20px;
+        margin-top: 20px;
+        margin-right: 20px;
+    }
+</style>
+<h3><span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span> Ad Group</h3>
+<div id="reactContent">
+
+</div>
+<script type="text/javascript">
+    var $global = window.$global = {};
+    $global.campaigns = @Html.Raw(ViewBag.Campaigns);
+    $global.campaignId = @Html.Raw(ViewBag.CampaignId);
+    $global.dayPartingTypes = @Html.Raw(ViewBag.DayPartingTypes);
+    $global.keywordTargetingTypes = @Html.Raw(ViewBag.KeywordTargetingType);
+    $global.products = @Html.Raw(ViewBag.Products);
+    $global.tiers = @Html.Raw(ViewBag.Tiers);
+    $global.uriPath = @Html.Raw(ViewBag.UriPath);
+    $global.mousedown = false;
+    $global.daypartState = '';
+    $global.startRow = 0;
+    $global.startCol = 0;
+</script>
+<script type="text/babel">
+    class App extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                view: "main",
+                model: null,
+                campaignId: $global.campaignId
+            }
+        }
+        render() {
+            if(this.state.view == "main")
+                return (<MainView changeView={this._changeView.bind(this)} campaign={this.state.campaignId}/>);
+            if(this.state.view == "update")
+                return (<EditAdGroupView changeView={this._changeView.bind(this)} model={this.state.model} campaign={this.state.campaignId} />);
+            if(this.state.view == "targeting")
+                return (<TargetingView changeView={this._changeView.bind(this)} model={this.state.model} campaign={this.state.campaignId} />);
+        }
+        _changeView(model,view,id) {
+            this.setState({
+                view: view,
+                model: model,
+                campaignId: id
+            })
+        }
+    }
+    class MainView extends React.Component {
+        constructor(props){
+            super(props);
+            this.state = {
+                filteredData: [],
+                originalData: [],
+                filterCampaign: this.props.campaign
+            }
+        }
+        componentWillMount(){
+            $.get($global.uriPath + '/AdGroup/AdGroup', function(data){
+                this.setState({
+                    originalData: data,
+                    filteredData: data                    
+                },()=>{
+                    this._filterData();
+                });
+            }.bind(this));
+        }
+        _filterData(e){
+            let name = '';
+            let value = '';
+            if(typeof e !== 'undefined'){
+                name = e.target.name;
+                value = e.target.value;
+            }            
+
+            let filtered = [];
+            let original = this.state.originalData;            
+            let campaign = this.state.filterCampaign;
+            if(typeof e !== 'undefined')
+            {
+                switch(name)
+                {
+                    case 'filterCampaign':
+                        campaign = value;
+                        break;
+                }
+            }
+                
+            if(campaign == '-1')
+                filtered = original;
+            else {
+                if(campaign != '-1')
+                    filtered = original.filter(c=>c.CampaignId == campaign);    
+            }
+            this.setState({
+                filteredData: filtered
+            });
+            if(typeof e !== 'undefined')
+                this.setState({[name]:value});
+        }
+        render() {
+            return(
+                <div>
+                    <CloneModal ref="cloneModal" onSuccess={this._refreshAdGroupData.bind(this)} />
+                    <DeleteModal ref="deleteModal" onSuccess={this._refresh.bind(this)} />
+                    <div className="well well-small">    
+                        <div className="form-inline btn-toolbar">                                
+                            <div className="input-group">
+                                <span className="input-group-addon">Campaign</span>
+                                <CampaignList type='filter' name='filterCampaign' onChange={(event) => this._filterData(event)} value={this.state.filterCampaign}/>
+                            </div>
+                            <div className="form-inline pull-right">
+                                <button type="button" className="btn btn-primary pull-left" onClick={this.props.changeView.bind(this,null,"update",this.state.filterCampaign)}><span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;New</button>
+                            </div>                            
+                        </div>                         
+                    </div>
+                    
+                    <div  className="panel panel-default">
+                        <AdGroupTable data={this.state.filteredData} changeView={this.props.changeView} campaign={this.state.filterCampaign} updateStatus={this._updateStatus.bind(this)} delete={this._showDeleteModal.bind(this)} duplicate={this._showDuplicateCampaign.bind(this)}/>
+                    </div>
+                </div>
+            );
+        }
+        _showDeleteModal(item) {
+            this.refs.deleteModal._show(item,'AdGroup');
+        }
+        _showDuplicateCampaign(ID,Name,CampaignId){
+            this.refs.cloneModal._show(ID,Name,CampaignId);
+        }
+        _refresh(id){
+            this.refs.deleteModal._hide();
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+
+            let original = this.state.originalData;
+            let index = _.findIndex(original,(x) => { return x.Id == id });
+            original.splice(index,1);
+            this.setState({originalData : original}, ()=>{
+                this._filterData();
+            });
+            toastr.success('Ad Group has been deleted.', 'Delete AdGroup');
+        }
+        _refreshAdGroupData() {
+            this.refs.cloneModal._hide();
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+            $.get($global.uriPath + '/AdGroup/AdGroup', function(data){
+                this.setState({
+                    originalData: data                    
+                },()=>{
+                    this._filterData();
+                });
+            }.bind(this));
+        }
+        _updateStatus(type,id,value) {
+            let m = {type: type,id: id, value: value };
+            let model = JSON.stringify(m);
+            //console.log(m);
+            $.ajax({
+                url: $global.uriPath + '/AdGroup/UpdateStatus',
+                type: 'POST',
+                data: model,
+                contentType:"application/json; charset=utf-8"
+            }).done((data) => {
+                let original = this.state.originalData;
+                let index = _.findIndex(original,(x) => { return x.Id == id });
+                original[index] = data;
+                this.setState({originalData : original}, ()=>{
+                    this._filterData();
+                });
+                toastr.success('Status for ad group has been updated.', 'Update Status');
+            }).fail((xhr, textStatus, error) => {
+                toastr.error('Unable to update status. Please refresh and try again.','Update Error');
+            });             
+        }
+    }
+    const CampaignList = (props) => {
+        let options = $global.campaigns.map((d) => {
+            if(props.type == 'filter' && d.Id == -1)
+                return(<option key={d.Id} value={d.Id}>- All Campaigns -</option>);
+            else
+                return(<option key={d.Id} value={d.Id}>{d.Name}</option>);
+        });
+        return (
+            <select className="form-control" name={props.name} value={props.value} onChange={props.onChange}>
+                {options}
+            </select>
+        );
+    }
+    class ProductList extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                selectedProducts:  this.props.selected
+            }
+        }
+        render() {
+            let options = $global.products.map((d) =>{
+                return(<div className="checkbox"  key={d.Id}>
+                    <label>
+                        <input type="checkbox" name={d.Name} value={d.Id} onChange={(event)=> this._toggleCheckbox(event,d.Id)} defaultChecked={ _.where(this.state.selectedProducts, {id: d.Id}).length > 0 ? true : false }/>
+                        {d.Name}
+                    </label>
+                </div>);
+            });
+            return(
+                <div>
+                    {options}
+                </div>               
+                );
+        }
+        _toggleCheckbox(e,id) {
+            const name = e.target.name;
+            const value = e.target.checked;
+            let prods = this.state.selectedProducts;
+            if(value)
+                prods.push({id: id, name: name});
+            else
+                prods = $.grep(prods, function(e){
+                    return e.id != id;
+                });
+            this.setState({ selectedProducts : prods });
+        }
+        _getSelectedProducts(){
+            return this.state.selectedProducts;
+        }
+    }
+    class TierList extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                selectedTiers: this.props.selected
+            }
+        }
+        render() {
+            let options = $global.tiers.map((d) => {
+                return(<div className="checkbox"  key={d.Id}>
+                    <label>
+                        <input type="checkbox" name={d.Name} value={d.Id} onChange={(event)=> this._toggleCheckbox(event,d.Id)} defaultChecked={ _.where(this.state.selectedTiers, {id: d.Id}).length > 0 ? true : false } />
+                        {d.Name}
+                    </label>
+                </div>);
+            });
+            return(
+                <div>
+                    {options}
+                </div>               
+                );
+        }
+        _toggleCheckbox(e,id) {
+            const name = e.target.name;
+            const value = e.target.checked;
+            let tiers = this.state.selectedTiers;
+            if(value)
+                tiers.push({id: id, name: name});
+            else
+                tiers = $.grep(tiers, function(e){
+                    return e.id != id;
+                });
+            this.setState({ selectedTiers : tiers });
+        }
+        _getSelectedTiers(){
+            return this.state.selectedTiers;
+        }
+    }
+    const DayPartingDropDown = (props) => {
+        let options = $global.dayPartingTypes.map(function(d){
+            return(<option key={d.Value} value={d.Value}>{d.Key}</option>);
+        });
+        return (
+            <select className="form-control" name={props.name} value={props.value} onChange={props.onChange}>
+                {options}
+            </select>
+        );
+    }
+    const KeywordTargetingDropDown = (props) => {
+        let options = $global.keywordTargetingTypes.map(function(d){
+            return(<option key={d.Value} value={d.Value}>{d.Key}</option>);
+        });
+        return (
+            <select className="form-control" name={props.name} value={props.value} onChange={props.onChange}>
+                {options}
+            </select>
+        );
+    }
+    const AdGroupTable = (props) => {
+        if(props.data.length == 0)
+            return (<span>There is no existing adgroup records or filter returns no result.</span>); 
+        let rows = props.data.map((d)=>
+            <tr key={d.Id}>
+                <td>{d.Id}</td>
+                <td>
+                    <div id="toggles">
+                        <input type="checkbox" name="active" className="ios-toggle" id={"checkbox" + d.Id} onChange={props.updateStatus.bind(this,'adGroup',d.Id,!d.Active)} defaultChecked={d.Active} />
+                        <label htmlFor={"checkbox" + d.Id} className="checkbox-label" data-off="" data-on=""></label>
+                    </div>
+                </td>
+                <td>
+                    <div className="status-cell">
+                        <div className="status">
+                            <span className={ d.Status == 'Active' ? 'status-active' : d.Status == 'Inactive' ? 'status-inactive' : 'status-pending' }>
+                                <i className={'fa fa-fw ' + (d.Status == 'Active' || d.Status == 'Inactive' ? 'fa-circle' : 'fa-minus-circle')} />
+                            </span>
+                            {d.Status}
+                        </div>
+                        <div className="reason hidden-xs">
+                            {d.Reason}
+                        </div>
+                    </div>
+                </td>
+                <td><a href={$global.uriPath + '/Ads/Index/' + d.Id}>{d.Name}</a></td>
+                <td><a href={$global.uriPath + '/AdGroup/Index/' + d.Campaign.Id}>{d.Campaign.Name}</a></td>
+                <td>{moment(d.StartDate).format('YYYY-MM-DD')}</td>
+                <td>{d.EndDate == null ? 'Never' : moment(d.EndDate).format('YYYY-MM-DD') }</td>
+                <td>{'$ ' + d.DailyBudget.toFixed(2) }</td>
+                <td>{'$ ' + d.Bid.toFixed(4) }</td>
+                <td>0</td>
+                <td>0</td>
+                <td>$ 0.00</td>
+                <td><a className="glyphicon glyphicon-duplicate" href="#" onClick={props.duplicate.bind(this,d.Id,d.Name,d.Campaign.Id)} ></a>&nbsp;
+                    <a className="glyphicon glyphicon-edit" href="#" onClick={props.changeView.bind(this,d,"update",props.campaign)} />&nbsp;
+                    <a className="glyphicon glyphicon-cog" href="#" onClick={props.changeView.bind(this,d,"targeting",props.campaign)} />&nbsp;
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a className="glyphicon glyphicon-trash" href="#" onClick={props.delete.bind(this,d)} />
+                    }
+                </td>
+            </tr>
+        );
+        return (                
+            <table className="table table-bordered table-responsive">
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>Active</td>
+                        <td></td>
+                        <td>Name</td>
+                        <td>Campaign</td>
+                        <td>Start Date</td>
+                        <td>End Date</td>                            
+                        <td>Daily Budget</td>
+                        <td>Bid</td>
+                        <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Searches</td>
+                        <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Impressions (Pop)</td>                            
+                        <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Spend</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>    
+        );
+    }
+    class EditAdGroupView extends React.Component{
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id : -1,
+                    name : '',
+                    campaignId: -1,
+                    active : true,
+                    startDate: '',
+                    endDate: 'Unlimited',
+                    adGroupType: 'cpc',
+                    dailyBudget : 0,
+                    bid: 0,
+                    products: [],
+                    tiers: [],
+                    impressions: 0,
+                    dayparting: 1,
+                    dayParts: '',
+                    keywordTargeting: 2,
+                    vmkeywords: '',
+                    vmnegativeKeywords:'',
+                    vmdomains: '',
+                    vmbannedDomains: ''
+                },
+                mode: 'Create' ,
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    campaignId:'',
+                    startDate: '',
+                    endDate: '',
+                    dailyBudget:'',
+                    bid: '',
+                    products: '',
+                    tiers:'',
+                    impressions:'',
+                    dayparting:''                    
+                },
+                formErrorMessage: {
+                    dailyBudget:'',
+                    endDate: '',
+                    products: '',
+                    tiers: ''
+                }
+            }
+        }
+        render() {
+            return(
+                <div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <h4>{this.state.mode} Ad Group</h4>
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <label className="label label-danger">{this.state.errorMessage}</label>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.name}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Name</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="name" placeholder="Ad Group Name" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.name} />
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <label htmlFor="active" className="col-sm-3 col-form-label">Active</label>
+                        <div className="col-sm-9">
+                            <div id="toggles">
+                                <input type="checkbox" name="active" id="checkbox_1" className="ios-toggle" onChange={(event)=> this._handleUserInput(event)} defaultChecked={this.state.model.active} />
+                                <label htmlFor="checkbox_1" className="checkbox-label" data-off="inactive" data-on="active"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.campaignId}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Campaign</label>
+                        <div className="col-sm-9">
+                            <CampaignList type='update' name='campaignId' value={this.state.model.campaignId} onChange={(event)=> this._handleUserInput(event)}/>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.startDate}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Start Date</label>
+                        <div className="col-sm-9">
+                            <div className='input-group date' ref="dpStartDate">
+                                <span className="input-group-addon">
+                                    <span className="glyphicon glyphicon-calendar"></span>
+                                </span>
+                                <input className='form-control' type='text' name="startDate" value={this.state.model.startDate} onChange={(event)=> this._handleUserInput(event)}/>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.endDate}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">End Date</label>
+                        <div className="col-sm-9">
+                            <div className='input-group date' ref="dpEndDate">
+                                <span className="input-group-addon">
+                                    <span className="glyphicon glyphicon-calendar"></span>
+                                </span>
+                                <input className='form-control' type='text' name="endDate" value={this.state.model.endDate} onChange={(event)=> this._handleUserInput(event)} />
+                                <span className="input-group-btn">
+                                    <button className="btn btn-default" type="button" onClick={this._unlimitedClicked.bind(this, 'endDate')}>
+                                        <i className={ "fa " + (this.state.model.endDate=='Unlimited' ? " fa-check-square-o" : " fa-square-o")} aria-hidden="true"></i>
+                                        <span>Unlimited</span>
+                                    </button>
+                                </span>
+                            </div>
+                            <span className="text-danger">{this.state.formErrorMessage.endDate}</span>
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="adGroupType" className="col-sm-3 col-form-label">Ad Group Type</label>
+                        <div className="col-sm-9">
+                            <select name="adGroupType" className="form-control" value={this.state.model.adGroupType} onChange={(event)=> this._handleUserInput(event)}>
+                                <option value="cpc">CPC</option>
+                                <option value="cpm">CPM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.dailyBudget}>
+                        <label htmlFor="dailyBudget" className="col-sm-3 col-form-label">Daily Budget</label>
+                        <div className="col-sm-9">
+                            <div className="input-group">
+                                <span className="input-group-addon">
+                                    <span className="glyphicon glyphicon-usd"></span>
+                                </span>
+                                <input className='form-control' name="dailyBudget" type="number" step="0.01" value={this.state.model.dailyBudget} onChange={(event)=> this._handleUserInput(event)} />
+                            </div>
+                            <span className="text-danger">{this.state.formErrorMessage.dailyBudget}</span>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.bid}>
+                        <label htmlFor="bid" className="col-sm-3 col-form-label">Bid</label>
+                        <div className="col-sm-9">
+                            <div className="input-group">
+                                <span className="input-group-addon">
+                                    <span className="glyphicon glyphicon-usd"></span>
+                                </span>
+                                <input className='form-control' name="bid" type="number" step="0.0001" value={this.state.model.bid} onChange={(event)=> this._handleUserInput(event)} />
+                            </div>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.products}>
+                        <label htmlFor="products" className="col-sm-3 col-form-label">Products</label>
+                        <div className="col-sm-9">
+                            <ProductList ref="products" selected={this.state.model.products}/>
+                            <span className="text-danger">{this.state.formErrorMessage.products}</span>
+                        </div>
+                    </div>
+                    @if (User.IsInRole("Admin"))
+                            {
+                    <div className={ 'form-group row ' + this.state.formErrors.tiers}>
+                        <label htmlFor="tiers" className="col-sm-3 col-form-label">Tiers</label>
+                        <div className="col-sm-9">
+                            <TierList ref="tiers" selected={this.state.model.tiers} />
+                            <span className="text-danger">{this.state.formErrorMessage.tiers}</span>
+                        </div>
+                    </div>
+                            }
+                    <div className="panel panel-default">
+                        <div className="panel-heading" id="hideAdvancedTitle">
+                            <h4 className="panel-title">
+                                <a className="collapsed text-toogle" data-toggle="collapse" role="button" href="#hideAdvanced" aria-expanded="false" aria-controls="hideAdvanced">
+                                    <span className="text-collapsed"><span className="caret" /> Show advanced fields</span>
+                                    <span className="text-expanded"><span className="dropup"><span className="caret"/></span> Hide advanced fields</span>
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="hideAdvanced" className="panel-collapse collapse" role="tabpanel" aria-labelledby="hideAdvancedTitle">
+                            <div className="panel-body">
+                                <br />
+
+                                <div className={ 'form-group row ' + this.state.formErrors.impressions}>
+                                    <label htmlFor="impressions" className="col-sm-3 col-form-label">impressions (Pop) per User</label>
+                                    <div className="col-sm-9">
+                                        <div className='input-group'>
+                                            <input className='form-control' type='text' name="impressions" value={this.state.model.impressions} onChange={(event)=> this._handleUserInput(event)} />
+                                            <span className="input-group-btn">
+                                                <button className="btn btn-default" type="button" onClick={this._unlimitedClicked.bind(this, 'impressions')}>
+                                                    <i className={ "fa " + (this.state.model.impressions=='0' ? " fa-check-square-o" : " fa-square-o")} aria-hidden="true"></i>
+                                                    <span>Unlimited</span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={ 'form-group row ' + this.state.formErrors.dayparting}>
+                                    <label htmlFor="dayParting" className="col-sm-3 col-form-label">Dayparting</label>
+                                    <div className="col-sm-9">
+                                        <DayPartingDropDown name="dayparting" value={this.state.model.dayparting} onChange={(event)=> this._handleUserInput(event)}/>
+                                    </div>
+                                </div>
+                                <div className={ 'form-group row '}>
+                                    <div className="col-sm-9 col-sm-offset-3 dayparts-editor">
+                                        <table className="dayparts table table-outlined" ref="daypartTable">
+                                            <thead>
+                                                <tr>
+                                                    <td rowSpan="2"></td>
+                                                    <td className="cell-label am-label" colSpan="12">AM</td>
+                                                    <td className="cell-label pm-label" colSpan="12">PM</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label hour-label hour-label-0 hour-label-am">24</td>
+                                                    <td className="cell-label hour-label hour-label-1 hour-label-am">1</td>
+                                                    <td className="cell-label hour-label hour-label-2 hour-label-am">2</td>
+                                                    <td className="cell-label hour-label hour-label-3 hour-label-am">3</td>
+                                                    <td className="cell-label hour-label hour-label-4 hour-label-am">4</td>
+                                                    <td className="cell-label hour-label hour-label-5 hour-label-am">5</td>
+                                                    <td className="cell-label hour-label hour-label-6 hour-label-am">6</td>
+                                                    <td className="cell-label hour-label hour-label-7 hour-label-am">7</td>
+                                                    <td className="cell-label hour-label hour-label-8 hour-label-am">8</td>
+                                                    <td className="cell-label hour-label hour-label-9 hour-label-am">9</td>
+                                                    <td className="cell-label hour-label hour-label-10 hour-label-am">10</td>
+                                                    <td className="cell-label hour-label hour-label-11 hour-label-am">11</td>
+                                                    <td className="cell-label hour-label hour-label-12 hour-label-pm">12</td>
+                                                    <td className="cell-label hour-label hour-label-13 hour-label-pm">13</td>
+                                                    <td className="cell-label hour-label hour-label-14 hour-label-pm">14</td>
+                                                    <td className="cell-label hour-label hour-label-15 hour-label-pm">15</td>
+                                                    <td className="cell-label hour-label hour-label-16 hour-label-pm">16</td>
+                                                    <td className="cell-label hour-label hour-label-17 hour-label-pm">17</td>
+                                                    <td className="cell-label hour-label hour-label-18 hour-label-pm">18</td>
+                                                    <td className="cell-label hour-label hour-label-19 hour-label-pm">19</td>
+                                                    <td className="cell-label hour-label hour-label-20 hour-label-pm">20</td>
+                                                    <td className="cell-label hour-label hour-label-21 hour-label-pm">21</td>
+                                                    <td className="cell-label hour-label hour-label-22 hour-label-pm">22</td>
+                                                    <td className="cell-label hour-label hour-label-23 hour-label-pm">23</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-0">Sunday</td>
+                                                    <td className="dayparts-cell day-0 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-1">Monday</td>
+                                                    <td className="dayparts-cell day-1 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-2">Tuesday</td>
+                                                    <td className="dayparts-cell day-2 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-3">Wednesday</td>
+                                                    <td className="dayparts-cell day-3 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-4">Thursday</td>
+                                                    <td className="dayparts-cell day-4 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-5">Friday</td>
+                                                    <td className="dayparts-cell day-5 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-6">Saturday</td>
+                                                    <td className="dayparts-cell day-6 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <td colSpan="25"></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div className='form-group row'>
+                                    <label htmlFor="keywordTargeting" className="col-sm-3 col-form-label">Keyword Targeting</label>
+                                    <div className="col-sm-9">
+                                        <KeywordTargetingDropDown name="keywordTargeting" value={this.state.model.keywordTargeting} onChange={(event)=> this._handleUserInput(event)}/>
+                                            <h6>Note: When
+                                                <strong>Targeted</strong> is selected, ads will not run unless
+                                                <strong>Keywords</strong> are added to this adgroup</h6>
+                                    </div>
+                                </div>
+                                <div className={ this.state.mode == 'Edit' ? 'hidden' : 'show' }>
+                                    <div className={ 'form-group row '}>
+                                        <label htmlFor="vmkeywords" className="col-sm-3 col-form-label">Keywords</label>
+                                        <div className="col-sm-9">
+                                            <textarea className="form-control" rows="5" name="vmkeywords" value={this.state.model.vmkeywords} onChange={(event)=> this._handleUserInput(event)} />
+                                                <span>Enter one Keyword per line</span>
+                                                <br/>
+                                                <span>Match types may be specified using the formatting:
+                                                    <strong>"Exact match"</strong> |
+                                                    <strong>[Phrase match]</strong> |
+                                                    <strong>Broad match</strong>
+                                                </span>
+                                                <br />
+                                                <span>Bid and override URL can be specified with a | delimiter in the following format: <strong>"Keyword"</strong> | <strong>0.05</strong> | <strong>http://www.smartidea.com</strong></span><br />
+                                                <span>If specifing an override url without a bid use the follorwing format:<strong>"Keyword"</strong> | | <strong>http://www.smartidea.com</strong></span>
+                                        </div>
+                                    </div>
+                                    <div className={ 'form-group row '}>
+                                        <label htmlFor="vmnegativeKeywords" className="col-sm-3 col-form-label">Negative Keywords</label>
+                                        <div className="col-sm-9">
+                                            <textarea className="form-control" rows="5" name="vmnegativeKeywords" value={this.state.model.vmnegativeKeywords} onChange={(event)=>
+                                            this._handleUserInput(event)}/>
+                                                <span>Enter one Keyword per line</span>
+                                                <br/>
+                                                <span>Match types may be specified using the formatting:
+                                                    <strong>"Exact match"</strong> |
+                                                    <strong>[Phrase match]</strong> |
+                                                    <strong>Broad match</strong>
+                                                </span>
+                                        </div>
+                                    </div>
+                                    <div className={ 'form-group row '}>
+                                        <label htmlFor="vmdomains" className="col-sm-3 col-form-label">Domains</label>
+                                        <div className="col-sm-9">
+                                            <textarea className="form-control" rows="5" name="vmdomains" value={this.state.model.vmdomains} onChange={(event)=> this._handleUserInput(event)}/>
+                                            <h6>Domains must be of the form
+                                                <strong> domain.com</strong>, one per line. <br />
+                                                <span>Bid can be specified with a | delimiter in the following format: <strong>domain.com</strong> | <strong>0.05</strong></span><br/>
+                                            </h6>
+                                        </div>
+                                    </div>
+                                    <div className={ 'form-group row '}>
+                                        <label htmlFor="vmbannedDomains" className="col-sm-3 col-form-label">Banned Domains</label>
+                                        <div className="col-sm-9">
+                                            <textarea className="form-control" rows="5" name="vmbannedDomains" value={this.state.model.vmbannedDomains} onChange={(event)=>
+                                            this._handleUserInput(event)}/>
+                                                <h6>Domains must be of the form
+                                                    <strong> domain.com</strong>, one per line.</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <div className="col-sm-12 btn-toolbar">
+                            <button type="button" className="btn btn-default pull-right" onClick={this.props.changeView.bind(this,null,"main",this.props.campaign)}>Cancel</button>
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._update.bind(this)}>Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        componentWillMount() {
+            if(this.props.model == null){
+                this.setState({
+                    model: {
+                        id : -1,
+                        name : '',
+                        campaignId: this.props.campaign,
+                        active : true,
+                        startDate: moment().format('YYYY-MM-DD'),
+                        endDate: 'Unlimited',
+                        adGroupType: 'cpc',
+                        dailyBudget : 0,
+                        bid: 0,
+                        products: [],
+                        tiers: [],
+                        impressions: 0,
+                        dayparting: '1',
+                        dayParts: '',
+                        keywordTargeting: 2,
+                        vmkeywords: '',
+                        vmnegativeKeywords:'',
+                        vmdomains: '',
+                        vmbannedDomains: ''
+                    },
+                    mode: 'Create',
+                    errorMessage: '',
+                    formErrors: {
+                        name: '',
+                        campaignId:'',
+                        startDate: '',
+                        endDate: '',
+                        dailyBudget:'',
+                        bid: '',
+                        products: '',
+                        tiers:'',
+                        impressions:'',
+                        dayparting:''                    
+                    },
+                    formErrorMessage: {
+                        dailyBudget:'',
+                        endDate: '',
+                        products: '',
+                        tiers: ''
+                    }
+                });
+            }
+            else {
+                let tiers = this.props.model.Tiers.map(function(d){
+                    return {id: d.Id, name: d.Name};
+                });
+                let products = this.props.model.Products.map(function(d){
+                    return {id: d.Id, name: d.Name};
+                });
+                this.setState({
+                    model: {
+                        id : this.props.model.Id,
+                        name : this.props.model.Name,
+                        campaignId: this.props.model.CampaignId,
+                        active : this.props.model.Active,
+                        startDate: moment(this.props.model.StartDate).format('YYYY-MM-DD'),
+                        endDate: this.props.model.EndDate == null ? 'Unlimited' : moment(this.props.model.EndDate).format('YYYY-MM-DD'),
+                        adGroupType: this.props.model.AdGroupType,
+                        dailyBudget : this.props.model.DailyBudget,
+                        bid: this.props.model.Bid,
+                        products: products,
+                        tiers: tiers,
+                        impressions: this.props.model.Impressions,
+                        dayparting: this.props.model.Dayparting,
+                        dayParts: this.props.model.DayParts,
+                        keywordTargeting: this.props.model.keywordTargeting,
+                        vmkeywords: this.props.model.Keywords,
+                        vmnegativeKeywords:this.props.model.negativeKeywords,
+                        vmdomains: this.props.model.Domains,
+                        vmbannedDomains: this.props.bannedDomains
+                    },
+                    mode: 'Edit',
+                    errorMessage: '',
+                    formErrors: {
+                        name: '',
+                        campaignId:'',
+                        startDate: '',
+                        endDate: '',
+                        dailyBudget:'',
+                        bid: '',
+                        products: '',
+                        tiers:'',
+                        impressions:'',
+                        dayparting:''                    
+                    },
+                    formErrorMessage: {
+                        dailyBudget:'',
+                        endDate: '',
+                        products: '',
+                        tiers: ''
+                    }
+                });
+                
+            }
+        }
+        componentDidMount() {
+            $(ReactDOM.findDOMNode(this.refs.dpStartDate)).datetimepicker({
+                format: 'YYYY-MM-DD',
+                allowInputToggle: true,
+                useCurrent: true
+            }).on('dp.change',(e) => {
+                let model = this.state.model;
+                model.startDate = moment(e.date).format('YYYY-MM-DD');
+                this.setState({model : model});
+                this._validateField('startDate',model.startDate);
+            }).on('dp.hide',(e) => {
+                let model = this.state.model;
+                model.startDate = moment(e.date).format('YYYY-MM-DD');
+                this.setState({model : model});
+                this._validateField('startDate',model.startDate);
+            });
+            $(ReactDOM.findDOMNode(this.refs.dpEndDate)).datetimepicker({
+                format: 'YYYY-MM-DD',
+                allowInputToggle: true,
+                useCurrent: true
+            }).on('dp.change',(e) => {
+                let model = this.state.model;
+                model.endDate = moment(e.date).format('YYYY-MM-DD');
+                this.setState({model : model});
+                this._validateField('endDate',model.endDate);
+            }).on('dp.hide',(e) => {
+                let model = this.state.model;
+                model.endDate = moment(e.date).format('YYYY-MM-DD');
+                this.setState({model : model});
+                this._validateField('endDate',model.endDate);
+            });
+            let p = this;
+            $('.cell-label').on('click',function(e){
+                let classes = $(this).attr('class');
+                let index = '';
+                if(classes.indexOf('hour-label-') > 0) {
+                    index = $.trim(classes.substr(classes.indexOf('hour-label-') + 11, 2));
+                    if($('.hour-' + index + '.hour-inactive').length <= 7 && $('.hour-' + index + '.hour-inactive').length > 0)
+                        $('.hour-' + index).removeClass('hour-inactive').addClass('hour-active');
+                    else
+                        $('.hour-' + index).removeClass('hour-active').addClass('hour-inactive');
+                }
+                else {
+                    index = $.trim(classes.substr(classes.indexOf('day-label-') + 10, 1));
+                    if($('.day-' + index + '.hour-inactive').length <= 24 && $('.day-' + index + '.hour-inactive').length > 0)
+                        $('.day-' + index).removeClass('hour-inactive').addClass('hour-active');
+                    else
+                        $('.day-' + index).removeClass('hour-active').addClass('hour-inactive');
+                }
+                p._setDayparting();
+            });
+            $('.dayparts-cell').on('click',function(e){
+                e.preventDefault();
+                if($(this).attr('class').indexOf('hour-inactive') > 0)
+                    $(this).removeClass('hour-inactive').addClass('hour-active');
+                else
+                    $(this).removeClass('hour-active').addClass('hour-inactive');
+                p._setDayparting();
+            });
+            $('.dayparts-cell').on('mousedown',function(e){
+                e.preventDefault();
+                $global.mousedown = true;
+                if($(this).attr('class').indexOf('hour-inactive') > 0)
+                    $global.daypartState = 'dragging-active';
+                else
+                    $global.daypartState = 'dragging-inactive';
+                $global.startRow = this.parentNode.rowIndex;
+                $global.startCol = this.cellIndex;
+                //console.log($(this).attr('class'));
+            });
+            $('.dayparts-cell').on('mousemove',function(e){
+                e.preventDefault();
+                if($global.mousedown){
+                    $('.' + $global.daypartState).removeClass($global.daypartState);
+                    //console.log(this.cellIndex + ' r ' + this.parentNode.rowIndex );
+                    let currentRow = this.parentNode.rowIndex;
+                    let currentCol = this.cellIndex;
+                    let startRow = $global.startRow <= currentRow ? $global.startRow : currentRow;
+                    let endRow = currentRow > $global.startRow ? currentRow : $global.startRow;
+                    let startCol = $global.startCol <= currentCol ? $global.startCol : currentCol;
+                    let endCol =  currentCol > $global.startCol ?  currentCol : $global.startCol ;
+                    //console.log('start row ' + startRow + ' end row ' + endRow + ' start col ' + startCol + ' end col ' + endCol);
+                    for(let x = startRow; x <= endRow; x++){
+                        for(let y = startCol; y <= endCol; y++){
+                            $('.day-' + (x-2) + '.hour-' + (y-1)).addClass($global.daypartState);
+                        }
+                    }
+                }
+                    
+            });
+            $('.dayparts-cell').on('mouseup',function(e){
+                e.preventDefault();
+                $global.mousedown = false;
+                if($global.daypartState == 'dragging-active')
+                    $('.' + $global.daypartState).removeClass($global.daypartState).removeClass('hour-inactive').addClass('hour-active');
+                else
+                    $('.' + $global.daypartState).removeClass($global.daypartState).removeClass('hour-active').addClass('hour-inactive');
+                $global.daypartState = '';
+                $global.startRow = -1;
+                $global.startCol = -1;
+                p._setDayparting();
+            });
+            this._setDaypartingCell(true);
+        }
+        _setDayparting(){
+            let daypart = 0;
+            if($('.dayparts-cell.hour-active').length == 168)
+                daypart = 1;
+            if($('.dayparts-cell.hour-0.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-1.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-2.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-3.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-4.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-5.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-6.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-7.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-8.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-9.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-10.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-11.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-12.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-13.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-14.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-15.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-16.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-17.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-18.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-19.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-20.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-21.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-22.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-23.hour-inactive').length == 7 )
+                daypart = 2;
+            if($('.dayparts-cell.hour-0.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-1.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-2.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-3.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-4.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-5.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-6.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-7.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-8.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-9.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-10.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-11.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-12.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-13.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-14.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-15.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-16.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-17.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-18.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-19.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-20.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-21.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-22.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-23.hour-active').length == 7 )
+                daypart = 3;
+            if($('.dayparts-cell.hour-0.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-1.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-2.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-3.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-4.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-5.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-6.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-7.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-8.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-9.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-10.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-11.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-12.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-13.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-14.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-15.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-16.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-17.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-18.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-19.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-20.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-21.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-22.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-23.hour-inactive').length == 7 )
+                daypart = 4;
+            if($('.dayparts-cell.day-0.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-1.hour-active').length == 24 &&
+            $('.dayparts-cell.day-2.hour-active').length == 24 &&
+            $('.dayparts-cell.day-3.hour-active').length == 24 &&
+            $('.dayparts-cell.day-4.hour-active').length == 24 &&
+            $('.dayparts-cell.day-5.hour-active').length == 24 &&
+            $('.dayparts-cell.day-6.hour-inactive').length == 24)
+                daypart = 5;
+            if($('.dayparts-cell.day-0.hour-active').length == 24 &&
+            $('.dayparts-cell.day-1.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-2.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-3.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-4.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-5.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-6.hour-active').length == 24)
+                daypart = 6;
+            if($('.dayparts-cell.day-0.hour-active').length == 24 &&
+            $('.dayparts-cell.day-1.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-2.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-3.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-4.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-5.hour-active').length == 24 &&
+            $('.dayparts-cell.day-6.hour-active').length == 24)
+                daypart = 7;
+
+            let model = this.state.model;
+            model.dayparting = daypart;
+            this.setState({ model: model});
+        }
+        _setDaypartingCell(load) {
+            if(this.state.model.dayparting != 0) {
+                let dayType = this.state.model.dayparting;
+                switch(dayType) {
+                    case "1":
+                        $('.dayparts-cell.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        break;
+                    case "2":
+                        $('.dayparts-cell.hour-0.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-5.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-6.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-7.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-8.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-9.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-10.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-11.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        
+                        $('.dayparts-cell.hour-12.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-13.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-14.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-15.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-16.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-17.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        
+                        $('.dayparts-cell.hour-18.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-19.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-20.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-21.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-22.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-23.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        break;
+                    case "3":
+                        $('.dayparts-cell.hour-0.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-5.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-6.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-7.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-8.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-9.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-10.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-11.hour-active').removeClass('hour-active').addClass('hour-inactive');                        
+                        $('.dayparts-cell.hour-12.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-13.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-14.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-15.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-16.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-17.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        
+                        $('.dayparts-cell.hour-18.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-19.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-20.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-21.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-22.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-23.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        break;
+                    case "4":
+                        $('.dayparts-cell.hour-0.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-5.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-6.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-7.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-8.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-9.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-10.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-11.hour-inactive').removeClass('hour-inactive').addClass('hour-active');                        
+                        $('.dayparts-cell.hour-12.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-13.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-14.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-15.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-16.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-17.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-18.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-19.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-20.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-21.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-22.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-23.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        break;
+                    case "5":
+                        $('.dayparts-cell.day-0.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-1.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-2.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-3.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-4.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-5.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-6.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        break;
+                    case "6":
+                        $('.dayparts-cell.day-0.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-5.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-6.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        break;
+                    case "7":
+                        $('.dayparts-cell.day-0.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-5.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-6.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        break;
+
+                }
+            }
+            else
+            {
+                if(load) {
+                    let daypartArr = this.state.model.dayParts.split('\n');
+                    _.each(daypartArr, (d) => {
+                        let hourArr = d.split(',');
+                        _.each(hourArr, (h)=>{
+                            let part = h.split(':');
+                            let dayNo = this._dayToNumber(part[0]);
+                            let hourNo = part[1];
+                            if(part[2] == 'A')
+                                $('.dayparts-cell.day-' + dayNo + '.hour-' + hourNo).removeClass('hour-inactive').addClass('hour-active');
+                            else
+                                $('.dayparts-cell.day-' + dayNo + '.hour-' + hourNo).removeClass('hour-active').addClass('hour-inactive');
+                        });
+                    });
+                }
+            }
+        }
+        _dayToNumber(day){
+            switch(day) {
+                case 'sun':
+                    return 0;
+                case 'mon' :
+                    return 1;
+                case 'tue' :
+                    return 2;
+                case 'wed' :
+                    return 3;
+                case 'thu' :
+                    return 4;
+                case 'fri' :
+                    return 5;
+                case 'sat' :
+                    return 6;
+            }
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.name == 'active' ? e.target.checked : e.target.name == 'impressions' && !(isNaN(e.target.value)) && e.target.value != '' ? parseInt(e.target.value) :  e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;                    
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+            if(name == 'dayparting')
+                this._setDaypartingCell(false);
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors;
+            let errorMsgs = this.state.formErrorMessage;
+            let model = this.state.model;
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'dailyBudget' :
+                    fieldErrors.dailyBudget = $.trim(value) === '' ? ' has-error' : parseFloat(value) < 1 ? ' has-error' : '' ;
+                    if(parseFloat(value) < 1)
+                        errorMsgs.dailyBudget = 'Daily budget must be at least $1.00.';
+                    else
+                        errorMsgs.dailyBudget = '';
+                    break;
+                case 'bid' :
+                    fieldErrors.bid = $.trim(value) === '' ? ' has-error' : parseFloat(value) < 0 ? ' has-error' : '' ;
+                    break;
+                case 'campaignId' :
+                    fieldErrors.campaignId = value == '-1' ? ' has-error' : '';
+                    break;
+                case 'startDate':
+                    fieldErrors.startDate = value == '' ? ' has-error' : !moment(value).isValid() ? ' has-error' : '';
+                    break;
+                case 'endDate':
+                    fieldErrors.endDate = value == '' || value == 'Unlimited' ? '' : !moment(value).isValid() ? ' has-error' : '';
+                    if(fieldErrors.startDate == '' && fieldErrors.endDate == '' && value != 'Unlimited' && value != ''){
+                        if(moment(this.state.model.startDate).isAfter(this.state.model.endDate)){
+                            fieldErrors.endDate = ' has-error';
+                            errorMsgs.endDate = 'End date must not be earlier than start date.';
+                        }
+                        else
+                            errorMsgs.endDate = '';
+                    }
+                    break;
+                case 'products':
+                    let products = this.refs.products._getSelectedProducts();
+                    fieldErrors.products = products.length == 0 ? " has-error" : '';
+                    errorMsgs.products = products.length == 0 ? 'Products is required' : '';
+                    model.products = products;
+                    this.setState({model : model});
+                    break;
+                @if (User.IsInRole("Admin")) {
+                <text>
+                case 'tiers' :
+                    let tiers = this.refs.tiers._getSelectedTiers();
+                    fieldErrors.tiers = tiers.length == 0 ? " has-error" : '';
+                    errorMsgs.tiers = tiers.length == 0 ? 'Tiers is required' : '';
+                    model.tiers = tiers;
+                    this.setState({model : model});
+                    break;
+                </text> }
+                case 'impressions' :
+                    fieldErrors.impressions = value == '' || value == '0' ? '' : parseInt(value) < 0 ? ' has-error' : '';
+                    break;
+                case 'dayparting' :
+                    let dpString = this._generateDayPartString();
+                    model.dayParts = dpString;
+                    this.setState({model : model});
+                    fieldErrors.dayparting = dpString.indexOf('A') == -1 ? " has-error" : '';
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors, formErrorMessage: errorMsgs});
+        }
+        _isValid() {
+            _.each(this.state.model,(i,e) =>{
+                this._validateField(e,this.state.model[e]);
+            });
+            return this._formIsValid();
+        }
+        _generateDayPartString() {
+            let daypartstring = '';
+            
+            $('.dayparts-cell').each(function(e){
+                let classStr = $(this).attr('class').replace('dayparts-cell ','').split(' ');
+                let day = '';
+                let hour = classStr[1].replace('hour-','');
+                let status = classStr[2] == 'hour-active' ? 'A' : 'I';
+                let dayNo = classStr[0].replace('day-','');
+                switch(dayNo){
+                    case '0' : 
+                        day = 'sun';
+                        break;
+                    case '1' : 
+                        day = 'mon';
+                        break;
+                    case '2' : 
+                        day = 'tue';
+                        break;
+                    case '3' : 
+                        day = 'wed';
+                        break;
+                    case '4' : 
+                        day = 'thu';
+                        break;
+                    case '5' : 
+                        day = 'fri';
+                        break;
+                    case '6' : 
+                        day = 'sat';
+                        break;
+                }
+                daypartstring += day + ":" + hour + ":" + status;
+
+                if(hour == "23")
+                    daypartstring += '\n';
+                else 
+                    daypartstring += ",";
+            });
+            return daypartstring;
+        }
+        _unlimitedClicked(control){
+            let model = this.state.model;
+            var formErrors = this.state.formErrors;
+            if(control == 'endDate'){
+                model.endDate = 'Unlimited';
+                formErrors.endDate = '';
+            }
+            if(control == 'impressions') {
+                model.impressions = 0;
+                formErrors.impressions = '';
+            }
+            this.setState({
+                model: model,
+                formErrors: formErrors
+            });
+        }
+        _formIsValid(){
+            if(this.state.formErrors.name === '' &&
+                    this.state.formErrors.campaignId === '' &&
+                    this.state.formErrors.startDate === '' &&
+                    this.state.formErrors.endDate === '' &&
+                    this.state.formErrors.dailyBudget === '' &&
+                    this.state.formErrors.bid === '' &&
+                    this.state.formErrors.products === '' &&
+                    this.state.formErrors.tiers === '' &&
+                    this.state.formErrors.impressions === '' &&
+                    this.state.formErrors.dayparting === '')
+                    return true;
+            else {
+                toastr.warning('One or more fields are currently invalid.','Validation Error');
+                return false;
+            }
+        }
+        _update() {
+            if(this._isValid()){
+                let onSuccess = this.props.changeView;
+                let campaignId = this.props.campaign;
+                let m = this.state.model;
+                if(m.endDate == '' || m.endDate == 'Unlimited')
+                    m.endDate = '';
+                let model = JSON.stringify(m);
+                //console.log(model);
+                $.ajax({
+                    url: $global.uriPath + '/AdGroup/AdGroup',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                    //dataType:"json"
+                }).done(function(data){
+                    onSuccess(null,"main",campaignId);
+                }).fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });             
+            }
+        }
+    }
+    class TargetingView extends React.Component {
+        constructor(props){
+            super(props);
+            this.state = {
+                adGroupName: this.props.model.Name,
+                adGroupId: this.props.model.Id,
+                keywords: this.props.model.Keywords,
+                domains: this.props.model.Domains
+            }
+        }
+        render(){
+            return(<div>
+                    <AddKeywordModal ref="keywordModal"onSuccess={this._refresh.bind(this)}/>
+                    <AddDomainModal ref="domainModal"onSuccess={this._refresh.bind(this)}/>
+                    <DeleteModal ref="deleteModal"onSuccess={this._refresh.bind(this)}/>
+                    <EditKeywordModal ref="editKeywordModal"onSuccess={this._refresh.bind(this)}/>
+                    <EditDomainModal ref="editDomainModal"onSuccess={this._refresh.bind(this)}/>
+                    <div className="well well-small">    
+                        <div className="form-inline btn-toolbar">                                
+                            <div className="input-group">
+                                <h4>Ad Group: <strong>{this.state.adGroupName}</strong></h4>
+                            </div>
+                            <button type="button" className="btn btn-danger" onClick={this.props.changeView.bind(this,null,"main",this.props.campaign)}><span className="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+                            <div className="form-inline pull-right btn-toolbar">
+                                <button type="button" className="btn btn-primary pull-left" onClick={this._openKeywordModal.bind(this)}><span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;New Keywords</button>
+                                <button type="button" className="btn btn-primary pull-left" onClick={this._openDomainModal.bind(this)}><span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;New Domains</button>
+                            </div>                            
+                        </div>                         
+                    </div>
+                    
+                    <div  className="panel panel-default">
+                        <ul className="nav nav-tabs" role="tablist">
+                            <li role="presentation" className="active"><a href="#keyword" aria-controls="keyword" role="tab" data-toggle="tab">Keywords</a></li>
+                            <li role="presentation"><a href="#nkeyword" aria-controls="nkeyword" role="tab" data-toggle="tab">Negative Keywords</a></li>
+                            <li role="presentation"><a href="#domain" aria-controls="domain" role="tab" data-toggle="tab">Domains</a></li>
+                            <li role="presentation"><a href="#bdomain" aria-controls="bdomain" role="tab" data-toggle="tab">Banned Domains</a></li>
+                        </ul>
+                        <div className="tab-content">
+                            <div role="tabpanel" className="tab-pane active" id="keyword"><KeywordTable data={this.state.keywords} negative={false} delete={this._openDeleteModal.bind(this)} edit={this._openEditKeywordModal.bind(this)} updateStatus={this._updateStatus.bind(this) }/></div>
+                            <div role="tabpanel" className="tab-pane" id="nkeyword"><KeywordTable data={this.state.keywords} negative={true} delete={this._openDeleteModal.bind(this)} edit={this._openEditKeywordModal.bind(this)} updateStatus={this._updateStatus.bind(this) }/></div>
+                            <div role="tabpanel" className="tab-pane" id="domain"><DomainTable data={this.state.domains} banned={false} delete={this._openDeleteModal.bind(this)} edit={this._openEditDomainModal.bind(this)} updateStatus={this._updateStatus.bind(this) }/></div>
+                            <div role="tabpanel" className="tab-pane" id="bdomain"><DomainTable data={this.state.domains} banned={true} delete={this._openDeleteModal.bind(this)} edit={this._openEditDomainModal.bind(this)} updateStatus={this._updateStatus.bind(this) }/></div>
+                        </div>
+                    </div>
+                </div>);
+        }
+        _openKeywordModal() {
+            this.refs.keywordModal._showCreate(this.state.adGroupName,this.state.adGroupId);
+        }
+        _openDomainModal() {
+            this.refs.domainModal._showCreate(this.state.adGroupName,this.state.adGroupId);
+        }
+        _openDeleteModal(d,dataType){
+            this.refs.deleteModal._show(d,dataType);
+        }
+        _openEditKeywordModal(d) {
+            this.refs.editKeywordModal._show(d);
+        }
+        _openEditDomainModal(d) {
+            this.refs.editDomainModal._show(d);
+        }
+        _refresh(){
+            this._refreshKeywordDomainData();
+            //this.refs.duplicateDialog._hide();
+            this.refs.keywordModal._hide();
+            this.refs.domainModal._hide();
+            this.refs.deleteModal._hide();
+            this.refs.editKeywordModal._hide();
+            this.refs.editDomainModal._hide();
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+        }
+        _refreshKeywordDomainData(){
+            $.get($global.uriPath + '/AdGroup/AdGroupById','id='+this.state.adGroupId, function(data){
+                this.setState({
+                    keywords: data.Keywords,
+                    domains: data.Domains                    
+                });
+            }.bind(this));
+        }
+        _updateStatus(type,id,value){
+            let m = {type: type,id: id, value: value };
+            let model = JSON.stringify(m);
+            //console.log(m);
+            $.ajax({
+                url: $global.uriPath + '/AdGroup/UpdateStatus',
+                type: 'POST',
+                data: model,
+                contentType:"application/json; charset=utf-8"
+            }).done((data) => {
+                let d = null;
+                if(type == 'keyword') 
+                    d = this.state.keywords;
+                else
+                    d = this.state.domains;
+                let index = _.findIndex(d,(x) => { return x.Id == id });
+                d[index].Active = value;
+                if(type == 'keyword')
+                    this.setState({keywords : d});
+                else
+                    this.setState({domains: d});    
+                toastr.success('Status for ' + type + ' has been updated.', 'Update Status');
+            }).fail((xhr, textStatus, error) => {
+                toastr.error('Unable to update status. Please refresh and try again.','Update Error');
+            });            
+        }
+    }
+    const KeywordTable = (props) => {
+        let data = props.data.filter(c=>c.Negative == props.negative);
+        let rows = data.map((d)=> {            
+            return(
+                <tr key={d.Id}>
+                    <td>{d.Id}</td>
+                    <td>
+                        <div id="toggles">
+                            <input type="checkbox" name="active" className="ios-toggle" id={"checkbox_keyword_" + d.Id} onChange={props.updateStatus.bind(this,'keyword',d.Id,!d.Active)} defaultChecked={d.Active} />
+                            <label htmlFor={"checkbox_keyword_" + d.Id} className="checkbox-label" data-off="" data-on=""></label>
+                        </div>
+                    </td>
+                    <td>{d.MatchType}</td>
+                    <td>{d.Text}</td>
+                    {!d.Negative &&
+                        <td>{d.BidPrice != null ? '$' + d.BidPrice.toFixed(4) : ''}</td>
+                    }                        
+                    {!d.Negative &&
+                    <td>{d.OverrideUrl}</td>}
+                    <td><a className="glyphicon glyphicon-trash" href="#" onClick={props.delete.bind(this,d,'Keyword')} />&nbsp;
+                        <a className="glyphicon glyphicon-edit" href="#" onClick={props.edit.bind(this,d)} />
+                    </td>
+                </tr>
+            );                        
+        });
+        return(
+            <table className="table table-bordered table-responsive">
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>Active</td>
+                        <td>Match Type</td>
+                        <td>Keyword</td>
+                        {props.negative == false && 
+                        <td>Bid Price</td>
+                        }
+                        {props.negative == false &&
+                        <td>Override Url</td>
+                        }
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>
+        );        
+    }
+    const DomainTable = (props) => {
+        let data = props.data.filter(c=>c.Banned == props.banned);
+        let rows = data.map((d)=> 
+                <tr key={d.Id}>
+                    <td>{d.Id}</td>
+                    <td>
+                        <div id="toggles">
+                            <input type="checkbox" name="active" className="ios-toggle" id={"checkbox_domain_" + d.Id} onChange={props.updateStatus.bind(this,'domain',d.Id,!d.Active)} defaultChecked={d.Active} />
+                            <label htmlFor={"checkbox_domain_" + d.Id} className="checkbox-label" data-off="" data-on=""></label>
+                        </div>
+                    </td>
+                    <td>{d.Text}</td>
+                    {props.banned == false &&
+                    <td>{d.BidPrice != null ? '$' + d.BidPrice.toFixed(4) : ''}</td>}
+                    <td><a className="glyphicon glyphicon-trash" href="#" onClick={props.delete.bind(this,d,'Domain')} />&nbsp;
+                        <a className="glyphicon glyphicon-edit" href="#" onClick={props.edit.bind(this,d)} />
+                    </td>
+                </tr>                   
+            );            
+        return(
+            <table className="table table-bordered table-responsive">
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>Active</td>
+                        <td>Domain Name</td>
+                        {props.banned == false &&
+                        <td>Bid Price</td>}
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>    
+        );
+    }
+    class AddKeywordModal extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                keywords: '',
+                negativeKeywords: '',
+                id: '',
+                name: '',
+                show: false,
+                errorMessage: ''
+            };
+        }
+        render(){
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog"  data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button"className="close" data-dismiss="modal" aria-label="Close"  onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Add Keywords</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className='form-group'>
+                                <label className="label label-danger">{this.state.errorMessage}</label>
+                            </div>
+                            <div className="form-group">
+                                <h4>{this.state.name}</h4>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="keywords">Keywords</label>
+                                <textarea className="form-control" rows="5" name="keywords" value={this.state.keywords} onChange={(event)=> this._handleUserInput(event)} />
+                                <span>Enter one Keyword per line</span>
+                                <br/>
+                                <span>Match types may be specified using the formatting:<br/>
+                                    <strong>"Exact match"</strong> |
+                                    <strong>[Phrase match]</strong> |
+                                    <strong>Broad match</strong>
+                                </span>
+                                <br />
+                                <span>Bid and override URL can be specified with a | delimiter in the following format: <strong>"Keyword"</strong> | <strong>0.05</strong> | <strong>http://www.smartidea.com</strong></span><br/>
+                                <span>If specifing an override url without a bid use the follorwing format:<strong>"Keyword"</strong> | | <strong>http://www.smartidea.com</strong></span>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="negativeKeywords">Negative Keywords</label>
+                                <textarea className="form-control" rows="5" name="negativeKeywords" value={this.state.negativeKeywords} onChange={(event)=> this._handleUserInput(event)} />
+                                <span>Enter one Keyword per line</span>
+                                <br/>
+                                <span>Match types may be specified using the formatting: <br />
+                                    <strong>"Exact match"</strong> |
+                                    <strong>[Phrase match]</strong> |
+                                    <strong>Broad match</strong>
+                                </span>                                
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this._update.bind(this)}>Save changes</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.value;
+
+            let item = this.state;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            this.setState({item: item});
+        }
+        componentDidUpdate() {
+            let $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+        _hide() {
+            this.setState({show:false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _isValid() {
+            if($.trim(this.state.keywords) == '' && $.trim(this.state.negativeKeywords) == '')
+            {
+                this.setState({errorMessage : 'Either keyword or negative keyword required!'});
+                return false;
+            }
+            this.setState({errorMessage : ''});
+            return true;
+            
+        }
+        _update() {
+            if(this._isValid()) {
+                let onSuccess = this.props.onSuccess;
+                    
+                let model = { id: this.state.id, keywords : this.state.keywords, negativeKeywords : this.state.negativeKeywords };
+                model = JSON.stringify(model);
+                //console.log(model);
+                $.ajax({
+                    url: $global.uriPath + '/AdGroup/Keywords',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                    //dataType:"json"
+                }).done(function(data){
+                    onSuccess();
+                }).fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });                
+            }
+        }
+        _showCreate(name,id){
+            this.setState({
+                keywords: '',
+                negativeKeywords: '',
+                id: id,
+                name: name,
+                show: true,
+                errorMessage:''
+            });
+        }
+    }
+    class AddDomainModal extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                domains: '',
+                bannedDomains: '',
+                id: '',
+                name: '',
+                show: false,
+                errorMessage: ''
+            };
+        }
+        render(){
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog"  data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button"className="close" data-dismiss="modal" aria-label="Close"  onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Add Domains</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className='form-group'>
+                                <label className="label label-danger">{this.state.errorMessage}</label>
+                            </div>
+                            <div className="form-group">
+                                <h4>{this.state.name}</h4>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="domains">Domains</label>
+                                <textarea className="form-control" rows="5" name="domains" value={this.state.domains} onChange={(event)=> this._handleUserInput(event)} />
+                                <h6>Domains must be of the form
+                                <strong> domain.com</strong>, one per line. <br />
+                                <span>Bid can be specified with a | delimiter in the following format: <strong>domain.com</strong> | <strong>0.05</strong></span><br/>
+                                </h6>
+                                
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="bannedDomains">Banned Domains</label>
+                                <textarea className="form-control" rows="5" name="bannedDomains" value={this.state.bannedDomains} onChange={(event)=> this._handleUserInput(event)} />
+                                <h6>Domains must be of the form
+                                                    <strong> domain.com</strong>, one per line.</h6>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this._update.bind(this)}>Save changes</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.value;
+
+            let item = this.state;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            this.setState({item: item});
+        }
+        componentDidUpdate() {
+            let $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+        _hide() {
+            this.setState({show:false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _isValid() {
+            if($.trim(this.state.domains) == '' && $.trim(this.state.bannedDomains) == '')
+            {
+                this.setState({errorMessage : 'Either domain or banned domain required!'});
+                return false;
+            }
+            this.setState({errorMessage : ''});
+            return true;
+            
+        }
+        _update() {
+            if(this._isValid()) {
+                let onSuccess = this.props.onSuccess;
+                    
+                let model = { id: this.state.id, domains: this.state.domains, bannedDomains: this.state.bannedDomains };
+                model = JSON.stringify(model);
+                //console.log(model);
+                $.ajax({
+                    url: $global.uriPath + '/AdGroup/Domains',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                    //dataType:"json"
+                }).done(function(data){
+                    onSuccess();
+                }).fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });                
+            }
+        }
+        _showCreate(name,id){
+            this.setState({
+                domains: '',
+                bannedDomains: '',
+                id: id,
+                name: name,
+                show: true,
+                errorMessage:''
+            });
+        }
+    }
+    class DeleteModal extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                show: false,
+                id: null,
+                text: '',
+                errorMessage: '',
+                dataType: ''
+            }
+        }
+        render(){
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog" data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Delete {this.state.dataType}</h4>
+                        </div>
+                        <div className="modal-body">
+                            <label className="label label-danger">{this.state.errorMessage}</label><br /><br />
+                            <label className="alert alert-warning">Are you sure to delete {this.state.dataType} "{this.state.text}" ?</label>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this._saveChanges.bind(this)}>Confirm</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _show(d,dataType) {
+            this.setState({ 
+                show: true,
+                id: d.Id,
+                text: dataType == 'AdGroup' ? d.Name : d.Text,
+                errorMessage:'',
+                dataType:dataType 
+            });
+        }
+
+        _hide() {
+            this.setState({show: false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _saveChanges() {
+            let onSuccess = this.props.onSuccess;
+            let id = this.state.id;
+            let type = this.state.dataType;
+            let url = '';
+            if(this.state.dataType == 'Keyword')
+                url = $global.uriPath + '/AdGroup/DeleteKeyword';
+            else if(this.state.dataType == 'Domain')
+                url = $global.uriPath + '/AdGroup/DeleteDomain';
+            else
+                url = $global.uriPath + '/AdGroup/DeleteAdGroup';
+
+            $.post(url,{ID: this.state.id})
+                .done(function(data){
+                    if(type == 'AdGroup')
+                        onSuccess(id);
+                    else
+                        onSuccess();
+                })
+                .fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : "Server error: " +error});
+                });
+        }
+        componentDidUpdate() {
+            var $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+    }
+    class EditKeywordModal extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id: -1,
+                    text: '',
+                    matchType: '',
+                    bidPrice: '',
+                    overrideUrl: '',
+                    negative: false
+                },
+                show: false,
+                errorMessage:'',
+                texterror: '',
+                bidPriceError: ''
+            }
+        }
+        render() {
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog" data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Edit Keyword</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className='form-group row'>
+                                <div className='col-sm-12'>
+                                    <label className="label label-danger">{this.state.errorMessage}</label>
+                                </div>
+                            </div>
+                            <div className={'form-group row ' + this.state.texterror}>
+                                <label htmlFor="text" className="col-sm-3 col-form-label">Keyword</label>
+                                <div className="col-sm-9">
+                                    <input className='form-control' name="text" onChange={(event) => this._handleUserInput(event)} placeholder="Keyword" value={this.state.model.text} />
+                                </div>
+                            </div>
+                            <div className="form-group row">
+                                <label htmlFor="matchType" className="col-sm-3 col-form-label">Match Type</label>
+                                <div className="col-sm-9">
+                                    <select className='form-control' name="matchType" onChange={(event) => this._handleUserInput(event)} value={this.state.model.matchType}>
+                                        <option value="Exact">Exact</option>
+                                        <option value="Phrase">Phrase</option>
+                                        <option value="Broad">Broad</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className={'form-group row ' + this.state.bidPriceError + (this.state.model.negative ? ' hide' : ' show')}>
+                                <label htmlFor="bidPrice" className="col-sm-3 col-form-label">Bid Price</label>
+                                <div className="col-sm-9">
+                                    <input className='form-control' type="number" name="bidPrice" step="0.0001" onChange={(event) => this._handleUserInput(event)} value={this.state.model.bidPrice} />
+                                </div>
+                            </div>
+                            <div className={'form-group row ' + (this.state.model.negative ? 'hide' : 'show')}>
+                                <label htmlFor="overrideUrl" className="col-sm-3 col-form-label">Override Url</label>
+                                <div className="col-sm-9">
+                                    <input className='form-control' name="overrideUrl" onChange={(event) => this._handleUserInput(event)} placeholder="Override url" value={this.state.model.overrideUrl} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this._saveChanges.bind(this)}>Confirm</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            this.setState({item: item});
+            if(name == 'text'){
+                this.setState({texterror: $.trim(value) == '' ? 'has-error' : ''});
+            }
+            if(name == 'bidPrice'){
+                this.setState({bidPriceError: $.trim(value) == '' ? '' : parseFloat(value) <= 0 ? 'has-error' : ''});
+            }
+        }
+        _show(d) {
+            this.setState({ 
+                model: {
+                    id: d.Id,
+                    text: d.Text,
+                    matchType: d.MatchType,
+                    bidPrice: d.BidPrice == null ? '' : d.BidPrice,
+                    overrideUrl: d.OverrideUrl == null ? '' : d.OverrideUrl,
+                    negative: d.Negative
+                },
+                show: true,
+                errorMessage:'',
+                texterror: ''
+            });
+        }
+
+        _hide() {
+            this.setState({show: false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _saveChanges() {
+            let onSuccess = this.props.onSuccess;
+            if(this.state.texterror == '' && this.state.bidPriceError == ''){
+                let model = JSON.stringify(this.state.model);
+                 $.ajax({
+                    url: $global.uriPath + '/AdGroup/UpdateKeyword',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                    //dataType:"json"
+                }).done(function(data){
+                    onSuccess();
+                })
+                .fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : "Server error: " + error});
+                });
+            }
+        }
+        componentDidUpdate() {
+            var $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+    }
+    class EditDomainModal extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id: -1,
+                    text: '',
+                    bidPrice: '',
+                    banned: false
+                },
+                show: false,
+                errorMessage:'',
+                texterror: ''
+            }
+        }
+        render() {
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog" data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Edit Domain</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className='form-group row'>
+                                <div className='col-sm-12'>
+                                    <label className="label label-danger">{this.state.errorMessage}</label>
+                                </div>
+                            </div>
+                            <div className={'form-group row ' + this.state.texterror}>
+                                <label htmlFor="text" className="col-sm-3 col-form-label">Keyword</label>
+                                <div className="col-sm-9">
+                                    <input className='form-control' name="text" onChange={(event) => this._handleUserInput(event)} placeholder="Keyword" value={this.state.model.text} />
+                                </div>
+                            </div>
+                            <div className={'form-group row ' + this.state.bidPriceError + (this.state.model.banned ? ' hide' : ' show')}>
+                                <label htmlFor="bidPrice" className="col-sm-3 col-form-label">Bid Price</label>
+                                <div className="col-sm-9">
+                                    <input className='form-control' type="number" name="bidPrice" step="0.0001" onChange={(event) => this._handleUserInput(event)} value={this.state.model.bidPrice} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this._saveChanges.bind(this)}>Confirm</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            if(name == 'text'){
+                this.setState({texterror: $.trim(value) == '' ? 'has-error' : ''});
+            }
+            if(name == 'bidPrice'){
+                this.setState({bidPriceError: $.trim(value) == '' ? '' : parseFloat(value) <= 0 ? 'has-error' : ''});
+            }
+            
+        }
+        _show(d) {
+            this.setState({ 
+                model: {
+                    id: d.Id,
+                    text: d.Text,
+                    bidPrice: d.BidPrice == null ? '' : d.BidPrice,
+                    banned: d.Banned
+                },
+                show: true,
+                errorMessage:'',
+                texterror: '',
+                bidPriceError: ''
+            });
+        }
+
+        _hide() {
+            this.setState({show: false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _saveChanges() {
+            let onSuccess = this.props.onSuccess;
+            if(this.state.texterror == '' && this.state.bidPriceError == ''){
+                let model = JSON.stringify(this.state.model);
+                 $.ajax({
+                    url: $global.uriPath + '/AdGroup/UpdateDomain',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                    //dataType:"json"
+                }).done(function(data){
+                    onSuccess();
+                })
+                .fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : "Server error: " + error});
+                });
+            }
+        }
+        componentDidUpdate() {
+            var $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+    }
+    class CloneModal extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                id: -1,
+                name: '',
+                campaignId: '',
+                show: false,
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    campaignId: ''
+                }
+            };
+        }
+        render() {
+            if(!this.state.show)
+                return null;
+            return (
+                <div className="modal fade" role="dialog" data-backdrop="static">
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button"className="close" data-dismiss="modal" aria-label="Close" onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Duplicate Campaign</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className="row">
+                                <div className="col-sm-12">
+                                    <label className="label label-danger">{this.state.errorMessage}</label>
+                                </div>
+                                <div className={"form-horizontal col-sm-12 " + this.state.formErrors.name }>
+                                    <div className="control-group">
+                                        <label className="control-label">New Name</label>
+                                        <input name='name' className="form-control" value={this.state.name} onChange={(event)=> this._handleUserInput(event)} />
+                                    </div>
+                                </div>
+                                <div className={"form-horizontal col-sm-12 " + this.state.formErrors.campaignId }>
+                                    <div className="control-group">
+                                        <label className="control-label">Parent Campaign</label>
+                                        <CampaignList type='update' name='campaignId' value={this.state.campaignId} onChange={(event)=> this._handleUserInput(event)}/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">                            
+                            <button type="button" className="btn btn-primary" onClick={this._duplicateAdGroup.bind(this,false)}><span className="glyphicon glyphicon-th-large" />Just this Ad Group</button>
+                            <button type="button" className="btn btn-success" onClick={this._duplicateAdGroup.bind(this,true)}><span className="glyphicon glyphicon-th" />This Ad Group and its Descendants</button>
+                            <button type="button" className="btn btn-default" onClick={this._hide.bind(this)} data-dismiss="modal">Close</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _show(id,name,campaignId) {
+            this.setState({
+                show: true,
+                id:id,
+                name:name,
+                campaignId:campaignId, 
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    campaignId: ''
+                }
+            });
+        }
+        _hide() {
+            this.setState({show: false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _duplicateAdGroup(duplicateAll) {
+
+            if(this.state.formErrors.name == '' && this.state.formErrors.campaignId == ''){
+                let onSuccess = this.props.onSuccess;
+                let name = $.trim(this.state.name);
+                $.post($global.uriPath + "/AdGroup/Clone",{id:this.state.id, name:name, campaignId:this.state.campaignId, fullCopy:duplicateAll})
+                .done(function(data){
+                    onSuccess();
+                })
+                .fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });
+            }
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.value;
+
+            let item = this.state;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'campaignId' :
+                    fieldErrors.campaignId =$.trim(value) === '-1' ? ' has-error' : '' ;
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors});
+        }
+        componentDidUpdate() {
+            var $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+    }
+    ReactDOM.render(
+        <App />, document.getElementById('reactContent')
+    );
+</script>

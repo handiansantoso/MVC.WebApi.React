@@ -1,0 +1,1921 @@
+﻿@{ 
+    ViewBag.Title = "Campaign Wizard";
+}
+<style>
+    div.dayparts-editor table.table.table-outlined {
+        border:1px solid #ccc;
+        border-radius:12px;
+        overflow:hidden;
+        border-collapse: separate;
+    }
+
+    div.dayparts-editor table.dayparts {
+        width: auto;
+        margin-top: 10px;
+    }
+    td.hour-label{
+        background: #eee !important;
+    }
+    div.dayparts-editor table.table > tfoot {
+        background: #eee;
+        overflow: hidden;
+    }
+    
+    .dayparts td.cell-label {
+        padding:3px;
+        -webkit-touch-callout:none;
+        -webkit-user-select:none;
+        -khtml-user-select:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none
+    }
+    .dayparts td.cell-label.day-label,.dayparts td.cell-label.hour-label {
+        cursor:pointer;
+        background:#E2F0FF;
+        text-align:right;
+        font-size:90%
+    }
+    .dayparts td.cell-label.presets-label {
+        text-align:right;
+        padding:0 5px;
+        vertical-align:middle
+    }
+    .dayparts td.dayparts-cell {
+        width:3.6%;
+        padding:0;
+        margin:0;
+        cursor:pointer;
+        line-height:1px;
+        font-size:1px;
+        background:linear-gradient(#DAB,#EBC)
+    }
+    .dayparts td.dayparts-cell.hour-active{
+        background:linear-gradient(#A0E674,#77AD3A)
+    }
+    .dayparts td.dayparts-cell.dragging-active{
+        background:linear-gradient(#D1EAB4,#A7CE7B)
+    }
+    .dayparts td.dayparts-cell.dragging-inactive{
+        background:#A71515
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell.hour-inactive{
+        background:#e64f4b;background:-webkit-gradient(linear, 0 0, 0 100%, from(#ec7b78), to(#e64f4b));
+        background:-webkit-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-o-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-moz-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-ms-linear-gradient(top, #ec7b78, #e64f4b);
+        background:linear-gradient(to bottom, #ec7b78, #e64f4b);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#ec7b78', EndColorStr='#e64f4b', GradientType=0)
+    }
+    .dayparts td.cell-label.day-label,.dayparts td.cell-label.hour-label{
+        background:#eee !important
+    }
+    .dayparts td.cell-label.day-label {
+        padding-left:1em;padding-right:.5em
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell {
+        transition:none;
+        background:#ef918f;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#f6bdbc), to(#ef918f));
+        background:-webkit-linear-gradient(top, #f6bdbc, #ef918f);
+        background:-o-linear-gradient(top, #f6bdbc, #ef918f);
+        background:-moz-linear-gradient(top, #f6bdbc, #ef918f);
+        background:-ms-linear-gradient(top, #f6bdbc, #ef918f);
+        background:linear-gradient(to bottom, #f6bdbc, #ef918f);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#f6bdbc', EndColorStr='#ef918f', GradientType=0);
+        height:14px;width:22px
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell.hour-active{
+        background:#63d063;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#8adc8a), to(#63d063));
+        background:-webkit-linear-gradient(top, #8adc8a, #63d063);
+        background:-o-linear-gradient(top, #8adc8a, #63d063);
+        background:-moz-linear-gradient(top, #8adc8a, #63d063);
+        background:-ms-linear-gradient(top, #8adc8a, #63d063);
+        background:linear-gradient(to bottom, #8adc8a, #63d063);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#8adc8a', EndColorStr='#63d063', GradientType=0)
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell.dragging-active{
+        background:#92de92;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#b9eab9), to(#92de92));
+        background:-webkit-linear-gradient(top, #b9eab9, #92de92);
+        background:-o-linear-gradient(top, #b9eab9, #92de92);
+        background:-moz-linear-gradient(top, #b9eab9, #92de92);
+        background:-ms-linear-gradient(top, #b9eab9, #92de92);
+        background:linear-gradient(to bottom, #b9eab9, #92de92);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#b9eab9', EndColorStr='#92de92', GradientType=0)
+    }
+    div.dayparts-editor table.dayparts tbody tr td.dayparts-cell.dragging-inactive {
+        background:#6c3837;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#8e4a48), to(#6c3837));
+        background:-webkit-linear-gradient(top, #8e4a48, #6c3837);
+        background:-o-linear-gradient(top, #8e4a48, #6c3837);
+        background:-moz-linear-gradient(top, #8e4a48, #6c3837);
+        background:-ms-linear-gradient(top, #8e4a48, #6c3837);
+        background:linear-gradient(to bottom, #8e4a48, #6c3837);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#8e4a48', EndColorStr='#6c3837', GradientType=0)
+    }
+    div.dayparts-editor table.dayparts tfoot>tr>td {
+        margin:0;padding:0 !important;height:12px
+    }
+    .dayparts-editor .hour-inactive,.note .hour-inactive,.dayparts-editor .hour-active,.note .hour-active {
+        background:#e64f4b;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#ec7b78), to(#e64f4b));
+        background:-webkit-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-o-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-moz-linear-gradient(top, #ec7b78, #e64f4b);
+        background:-ms-linear-gradient(top, #ec7b78, #e64f4b);
+        background:linear-gradient(to bottom, #ec7b78, #e64f4b);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#ec7b78', EndColorStr='#e64f4b', GradientType=0);
+        height:14px;
+        width:22px;
+        border:1px solid #ccc !important
+    }
+    div.dayparts-editor table.dayparts td.am-label,table.dayparts td.hour-11,table.dayparts td.hour-label-11 {
+        border-right:1px solid #ccc !important;
+        border-right-width:2px !important
+    }
+    div.dayparts-editor table.dayparts td.hour-23,table.dayparts td.hour-label-23 {
+        border-right:1px solid #ccc !important;
+        border-right-width:2px !important
+    }
+    div.dayparts-editor table.dayparts td.hour-0,table.dayparts td.hour-label-0 {
+        border-left:1px solid #ccc !important;
+        border-left-width:2px !important
+    }
+    div.dayparts-editor table.dayparts td.day-6 {
+        border-bottom:1px solid #ccc !important;
+        border-bottom-width:2px !important
+    }
+    .dayparts-editor .hour-active,.note .hour-active {
+        background:#63d063;
+        background:-webkit-gradient(linear, 0 0, 0 100%, from(#8adc8a), to(#63d063));
+        background:-webkit-linear-gradient(top, #8adc8a, #63d063);
+        background:-o-linear-gradient(top, #8adc8a, #63d063);
+        background:-moz-linear-gradient(top, #8adc8a, #63d063);
+        background:-ms-linear-gradient(top, #8adc8a, #63d063);
+        background:linear-gradient(to bottom, #8adc8a, #63d063);
+        filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#8adc8a', EndColorStr='#63d063', GradientType=0)
+    }
+    .dayparts-editor div.hour-inactive,.note div.hour-inactive,.dayparts-editor div.hour-active,.note div.hour-active {
+        vertical-align:middle;
+        display:inline-block
+    }
+    .dayparting-cell>table{
+        pointer-events:none
+    }
+    .dayparting-cell>table>thead>tr:first-child{
+        display:none
+    }
+    div.dayparts-editor table.table td {
+        border-top:0 !important;
+        border-left:0;
+        position:relative;
+        border-bottom-width:0;
+        transition:background-color 1s,border-bottom-width 1s
+    }
+    .text-toogle[aria-expanded=false] .text-expanded {
+        display: none;
+    }
+    .text-toogle[aria-expanded=true] .text-collapsed {
+        display: none;
+    }
+    .tab-pane {
+        margin-left: 20px;
+        margin-top: 20px;
+        margin-right: 20px;
+    }
+</style>
+<h3><span class="glyphicon glyphicon-knight" aria-hidden="true"></span> Create Campaign Wizard</h3>
+<script type="text/javascript">
+    var $global = window.$global = {};
+    $global.deliveryTypes = @Html.Raw(ViewBag.DeliveryTypes);
+    $global.dayPartingTypes = @Html.Raw(ViewBag.DayPartingTypes);
+    $global.keywordTargetingTypes = @Html.Raw(ViewBag.KeywordTargetingType);
+    $global.products = @Html.Raw(ViewBag.Products);
+    $global.tiers = @Html.Raw(ViewBag.Tiers);
+    $global.uriPath = @Html.Raw(ViewBag.UriPath);
+    $global.mousedown = false;
+    $global.daypartState = '';
+    $global.startRow = 0;
+    $global.startCol = 0;
+    @if (User.IsInRole("Admin"))
+    {
+        <text>
+        $global.users = @Html.Raw(ViewBag.Users);
+        </text>
+    }
+</script>
+<div id="reactContent">
+
+</div>
+<script type="text/babel">
+    class App extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                view: "campaign",
+                campaignModel: null,
+                adGroupModel: null,
+                adModel: null,
+                summaryModel: null
+            }
+        }
+        render() {
+            if(this.state.view == "campaign")
+                return (<CampaignView changeView={this._changeView.bind(this)} model={this.state.campaignModel} />);
+            if(this.state.view == "adGroup")
+                return (<AdGroupView changeView={this._changeView.bind(this)} model={this.state.adGroupModel}  />);
+            if(this.state.view == "ad")
+                return (<AdView changeView={this._changeView.bind(this)} model={this.state.adModel}  />);
+            if(this.state.view == "summary")
+                return (<SummaryView changeView={this._changeView.bind(this)} campaign={this.state.campaignModel} adgroup={this.state.adGroupModel} ad={this.state.adModel} />);
+        }
+        _changeView(model,direction) {
+            let view = this.state.view;
+            if(direction == "exit") {
+                window.location.href = '/Campaign';
+            }
+            else {            
+                if(direction == "next") {
+                    switch(view) {
+                        case "campaign" :
+                            view = "adGroup";
+                            this.setState({ view: view, campaignModel: model });
+                            break;
+                        case "adGroup" :
+                            view = "ad";
+                            this.setState({ view: view, adGroupModel: model });
+                            break;
+                        case "ad" :
+                            view = "summary";
+                            this.setState({ view: view, adModel: model });
+                            break;
+                    }
+                }
+                else {
+                    switch(view) {
+                        case "adGroup" :
+                            view = "campaign";
+                            this.setState({ view: view, adGroupModel: model });
+                            break;
+                        case "ad" :
+                            view = "adGroup";
+                            this.setState({ view: view, adModel: model });
+                            break;
+                        case "summary" :
+                            view = "ad";
+                            this.setState({ view: view });
+                            break;
+                    }
+                }
+            }            
+        }        
+    }
+    class CampaignView extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id : -1,
+                    name : '',
+                    overallBudget : 0,
+                    dailyBudget : 0,
+                    deliveryType : '1',
+                    active : true,
+                    advertiserId: 1
+                },
+                formErrors: {
+                    name: '',
+                    overallBudget : '',
+                    dailyBudget : '',
+                    deliveryType : ''
+                }
+            }
+        }
+        render(){
+            return(
+                <div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <h4>Campaign</h4>
+                        </div>
+                    </div>
+                    <div className={'form-group row ' + this.state.formErrors.name}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Name</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="name" onChange={(event) => this._handleUserInput(event)} placeholder="Campaign Name" value={this.state.model.name} />
+                        </div>
+                    </div>
+                    <div className={'form-group row '}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Status</label>
+                        <div className="col-sm-9">
+                            <div id="toggles">
+                                <input type="checkbox" name="active" id="checkbox1" className="ios-toggle" onChange={(event) => this._handleUserInput(event)} defaultChecked={this.state.model.active} />
+                                <label htmlFor="checkbox1" className="checkbox-label" data-off="inactive" data-on="active"></label>
+                            </div>
+                        </div>
+                    </div>                          
+                    <div className={'form-group row ' + this.state.formErrors.deliveryType}>
+                        <label htmlFor="deliveryType" className="col-sm-3 col-form-label">Delivery Type</label>
+                        <div className="col-sm-9">
+                            <DeliveryTypeDropDown name="deliveryType" type="edit" value={this.state.model.deliveryType} onChange={(event) => this._handleUserInput(event)}/>
+                        </div>
+                    </div>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div className='form-group row '>
+                            <label htmlFor="deliveryType" className="col-sm-3 col-form-label">Advertiser</label>
+                            <div className="col-sm-9">
+                                <UserDropDown name="advertiserId" type="edit" value={this.state.model.advertiserId} onChange={(event) => this._handleUserInput(event)}/>
+                            </div>
+                        </div>
+                    }                            
+                    <div className="form-group row">
+                        <label htmlFor="dailyBudget" className="col-sm-3 col-form-label">Daily Budget</label>
+                        <div className={'col-sm-6' + this.state.formErrors.dailyBudget}>
+                            <div className="input-group">
+                                <span className="input-group-addon">$</span>
+                                <input className="form-control"  type="number" step="0.01" name="dailyBudget" value={this.state.model.dailyBudget} onChange={(event) => this._handleUserInput(event)} />
+                                <span className="input-group-btn">
+                                    <button className="btn btn-default" type="button" onClick={this._unlimitedClicked.bind(this,'daily')}>
+                                        <i className={"fa " + (this.state.model.dailyBudget == 0 ? " fa-check-square-o" : " fa-square-o")} aria-hidden="true"></i><span>Unlimited</span>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <label htmlFor="overallBudget" className="col-sm-3 col-form-label">Overall Budget</label>
+                        <div className={'col-sm-6' + this.state.formErrors.overallBudget}>
+                            <div className="input-group">
+                                <span className="input-group-addon">$</span>
+                                <input className="form-control"  type="number" step="0.01" name="overallBudget" value={this.state.model.overallBudget} onChange={(event) => this._handleUserInput(event)} />
+                                <span className="input-group-btn">
+                                <button className="btn btn-default" type="button" onClick={this._unlimitedClicked.bind(this,'overall')}>
+                                    <i className={"fa " + (this.state.model.overallBudget == 0 ? " fa-check-square-o" : " fa-square-o")} aria-hidden="true"></i><span>Unlimited</span>
+                                </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <div className="col-sm-12 btn-toolbar">                            
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._next.bind(this)}>Next <span className="glyphicon glyphicon-forward" /></button>
+                            <button type="button" className="btn btn-default pull-right" onClick={this.props.changeView.bind(this,null,"exit")}><span className="glyphicon glyphicon-remove" /> Exit Wizard</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.name == 'active' ? e.target.checked : e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+        }
+
+        _unlimitedClicked(budgeType) {
+            var model = this.state.model;
+            var formErrors = this.state.formErrors;
+            if(budgeType == 'daily')
+            {
+                model.dailyBudget = 0;
+                formErrors.dailyBudget = '';
+            }                
+            else
+            {
+                model.overallBudget = 0;
+                formErrors.overallBudget = '';
+            }                 
+            this.setState({
+                model: model,
+                formErrors: formErrors
+            });
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'dailyBudget' :
+                    fieldErrors.dailyBudget = $.trim(value) === '' ? ' has-error' : parseFloat(value) < 0 ? ' has-error' : '' ;
+                    break;
+                case 'overallBudget' :
+                    fieldErrors.overallBudget = $.trim(value) === '' ? ' has-error' : parseFloat(value) < 0 ? ' has-error' : '';
+                    if(fieldErrors.dailyBudget == '' & fieldErrors.overallBudget == ''){
+                        if(this.state.model.dailyBudget > 0 && this.state.model.overallBudget > 0)
+                            fieldErrors.overallBudget = this.state.model.dailyBudget > this.state.model.overallBudget ? ' has-error' : '';
+                    }
+                    break; 
+                case 'deliveryType' :
+                    fieldErrors.deliveryType = value === '-1' ? ' has-error' : '';
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors});
+        }
+        _formIsValid() {
+            return this.state.formErrors.name === ''             
+            && this.state.formErrors.deliveryType === ''
+            && this.state.formErrors.overallBudget === ''
+            && this.state.formErrors.dailyBudget === '';
+        }
+        _isValid() {
+            _.each(this.state.model,(i,e) =>{
+                this._validateField(e,this.state.model[e]);
+            });
+            return this._formIsValid();
+        }
+        _next() {
+            if(this._isValid()) {
+                //console.log(this.state.model);
+                this.props.changeView(this.state.model,'next');                
+            }
+        }
+        componentWillMount() {
+            if(this.props.model != null)
+            {
+                this.setState({
+                    model: this.props.model
+                });
+            }            
+        }
+    }
+    class DeliveryTypeDropDown extends React.Component {
+        render() {
+            let type = this.props.type;
+            let options = $global.deliveryTypes.map(function(d) {
+                if(type == 'filter' && d.Value == -1)
+                    return(<option key={d.Value} value={d.Value}>- All Delivery Type -</option>);
+                else
+                    return(<option key={d.Value} value={d.Value}>{d.Key}</option>);
+            });
+            return (
+                <select className="form-control" name={this.props.name} value={this.props.value} onChange={this.props.onChange}>
+                    {options}
+                </select>
+            );
+        }
+    }
+    class UserDropDown extends React.Component {
+        render() {
+            let type = this.props.type;
+            let options = $global.users.map(function(d) {
+                    return(<option key={d.Id} value={d.Id}>{d.UserName}</option>);
+            });
+            return (
+                <select className="form-control" name={this.props.name} value={this.props.value} onChange={this.props.onChange}>
+                    {options}
+                </select>
+            );
+        }
+    }
+
+    class AdGroupView extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id : -1,
+                    name : '',
+                    active : true,
+                    startDate: '',
+                    endDate: 'Unlimited',
+                    adGroupType: 'cpc',
+                    dailyBudget : 0,
+                    bid: 0,
+                    products: [],
+                    tiers: [],
+                    impressions: 0,
+                    dayparting: 1,
+                    dayParts: '',
+                    keywordTargeting: 2,
+                    vmkeywords: '',
+                    vmnegativeKeywords:'',
+                    vmdomains: '',
+                    vmbannedDomains: ''
+                },
+                formErrors: {
+                    name: '',
+                    startDate: '',
+                    endDate: '',
+                    dailyBudget:'',
+                    bid: '',
+                    products: '',
+                    tiers:'',
+                    impressions:'',
+                    dayparting:''                    
+                },
+                formErrorMessage: {
+                    dailyBudget:'',
+                    endDate: '',
+                    products: '',
+                    tiers: ''
+                }
+            }
+        }
+        render() {
+            return(
+                <div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <h4>Ad Group</h4>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.name}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Name</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="name" placeholder="Ad Group Name" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.name} />
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <label htmlFor="active" className="col-sm-3 col-form-label">Status</label>
+                        <div className="col-sm-9">
+                            <div id="toggles">
+                                <input type="checkbox" name="active" id="checkbox1" className="ios-toggle" onChange={(event)=> this._handleUserInput(event)} defaultChecked={this.state.model.active} />
+                                <label htmlFor="checkbox1" className="checkbox-label" data-off="inactive" data-on="active"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.startDate}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Start Date</label>
+                        <div className="col-sm-9">
+                            <div className='input-group date' ref="dpStartDate">
+                                <span className="input-group-addon">
+                                    <span className="glyphicon glyphicon-calendar"></span>
+                                </span>
+                                <input className='form-control' type='text' name="startDate" value={this.state.model.startDate} onChange={(event)=> this._handleUserInput(event)}/>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.endDate}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">End Date</label>
+                        <div className="col-sm-9">
+                            <div className='input-group date' ref="dpEndDate">
+                                <span className="input-group-addon">
+                                    <span className="glyphicon glyphicon-calendar"></span>
+                                </span>
+                                <input className='form-control' type='text' name="endDate" value={this.state.model.endDate} onChange={(event)=> this._handleUserInput(event)} />
+                                <span className="input-group-btn">
+                                    <button className="btn btn-default" type="button" onClick={this._unlimitedClicked.bind(this, 'endDate')}>
+                                        <i className={ "fa " + (this.state.model.endDate=='Unlimited' ? " fa-check-square-o" : " fa-square-o")} aria-hidden="true"></i>
+                                        <span>Unlimited</span>
+                                    </button>
+                                </span>
+                            </div>
+                            <span className="text-danger">{this.state.formErrorMessage.endDate}</span>
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="adGroupType" className="col-sm-3 col-form-label">Ad Group Type</label>
+                        <div className="col-sm-9">
+                            <select name="adGroupType" className="form-control" value={this.state.model.adGroupType} onChange={(event)=> this._handleUserInput(event)}>
+                                <option value="cpc">CPC</option>
+                                <option value="cpm">CPM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.dailyBudget}>
+                        <label htmlFor="dailyBudget" className="col-sm-3 col-form-label">Daily Budget</label>
+                        <div className="col-sm-9">
+                            <div className="input-group">
+                                <span className="input-group-addon">
+                                    <span className="glyphicon glyphicon-usd"></span>
+                                </span>
+                                <input className='form-control' name="dailyBudget" type="number" step="0.01" value={this.state.model.dailyBudget} onChange={(event)=> this._handleUserInput(event)} />
+                            </div>
+                            <span className="text-danger">{this.state.formErrorMessage.dailyBudget}</span>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.bid}>
+                        <label htmlFor="bid" className="col-sm-3 col-form-label">Bid</label>
+                        <div className="col-sm-9">
+                            <div className="input-group">
+                                <span className="input-group-addon">
+                                    <span className="glyphicon glyphicon-usd"></span>
+                                </span>
+                                <input className='form-control' name="bid" type="number" step="0.0001" value={this.state.model.bid} onChange={(event)=> this._handleUserInput(event)} />
+                            </div>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.products}>
+                        <label htmlFor="products" className="col-sm-3 col-form-label">Products</label>
+                        <div className="col-sm-9">
+                            <ProductList ref="products" selected={this.state.model.products}/>
+                            <span className="text-danger">{this.state.formErrorMessage.products}</span>
+                        </div>
+                    </div>
+                    @if (User.IsInRole("Admin"))
+                            {
+                    <div className={ 'form-group row ' + this.state.formErrors.tiers}>
+                        <label htmlFor="tiers" className="col-sm-3 col-form-label">Tiers</label>
+                        <div className="col-sm-9">
+                            <TierList ref="tiers" selected={this.state.model.tiers} />
+                            <span className="text-danger">{this.state.formErrorMessage.tiers}</span>
+                        </div>
+                    </div>
+                            }
+                    <div className="panel panel-default">
+                        <div className="panel-heading" id="hideAdvancedTitle">
+                            <h4 className="panel-title">
+                                <a className="collapsed text-toogle" data-toggle="collapse" role="button" href="#hideAdvanced" aria-expanded="false" aria-controls="hideAdvanced">
+                                    <span className="text-collapsed"><span className="caret" /> Show advanced fields</span>
+                                    <span className="text-expanded"><span className="dropup"><span className="caret"/></span> Hide advanced fields</span>
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="hideAdvanced" className="panel-collapse collapse" role="tabpanel" aria-labelledby="hideAdvancedTitle">
+                            <div className="panel-body">
+                                <br />
+
+                                <div className={ 'form-group row ' + this.state.formErrors.impressions}>
+                                    <label htmlFor="impressions" className="col-sm-3 col-form-label">impressions (Pop) per User</label>
+                                    <div className="col-sm-9">
+                                        <div className='input-group'>
+                                            <input className='form-control' type='text' name="impressions" value={this.state.model.impressions} onChange={(event)=> this._handleUserInput(event)} />
+                                            <span className="input-group-btn">
+                                                <button className="btn btn-default" type="button" onClick={this._unlimitedClicked.bind(this, 'impressions')}>
+                                                    <i className={ "fa " + (this.state.model.impressions=='0' ? " fa-check-square-o" : " fa-square-o")} aria-hidden="true"></i>
+                                                    <span>Unlimited</span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={ 'form-group row ' + this.state.formErrors.dayparting}>
+                                    <label htmlFor="dayParting" className="col-sm-3 col-form-label">Dayparting</label>
+                                    <div className="col-sm-9">
+                                        <DayPartingDropDown name="dayparting" value={this.state.model.dayparting} onChange={(event)=> this._handleUserInput(event)}/>
+                                    </div>
+                                </div>
+                                <div className={ 'form-group row '}>
+                                    <div className="col-sm-9 col-sm-offset-3 dayparts-editor">
+                                        <table className="dayparts table table-outlined" ref="daypartTable">
+                                            <thead>
+                                                <tr>
+                                                    <td rowSpan="2"></td>
+                                                    <td className="cell-label am-label" colSpan="12">AM</td>
+                                                    <td className="cell-label pm-label" colSpan="12">PM</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label hour-label hour-label-0 hour-label-am">24</td>
+                                                    <td className="cell-label hour-label hour-label-1 hour-label-am">1</td>
+                                                    <td className="cell-label hour-label hour-label-2 hour-label-am">2</td>
+                                                    <td className="cell-label hour-label hour-label-3 hour-label-am">3</td>
+                                                    <td className="cell-label hour-label hour-label-4 hour-label-am">4</td>
+                                                    <td className="cell-label hour-label hour-label-5 hour-label-am">5</td>
+                                                    <td className="cell-label hour-label hour-label-6 hour-label-am">6</td>
+                                                    <td className="cell-label hour-label hour-label-7 hour-label-am">7</td>
+                                                    <td className="cell-label hour-label hour-label-8 hour-label-am">8</td>
+                                                    <td className="cell-label hour-label hour-label-9 hour-label-am">9</td>
+                                                    <td className="cell-label hour-label hour-label-10 hour-label-am">10</td>
+                                                    <td className="cell-label hour-label hour-label-11 hour-label-am">11</td>
+                                                    <td className="cell-label hour-label hour-label-12 hour-label-pm">12</td>
+                                                    <td className="cell-label hour-label hour-label-13 hour-label-pm">13</td>
+                                                    <td className="cell-label hour-label hour-label-14 hour-label-pm">14</td>
+                                                    <td className="cell-label hour-label hour-label-15 hour-label-pm">15</td>
+                                                    <td className="cell-label hour-label hour-label-16 hour-label-pm">16</td>
+                                                    <td className="cell-label hour-label hour-label-17 hour-label-pm">17</td>
+                                                    <td className="cell-label hour-label hour-label-18 hour-label-pm">18</td>
+                                                    <td className="cell-label hour-label hour-label-19 hour-label-pm">19</td>
+                                                    <td className="cell-label hour-label hour-label-20 hour-label-pm">20</td>
+                                                    <td className="cell-label hour-label hour-label-21 hour-label-pm">21</td>
+                                                    <td className="cell-label hour-label hour-label-22 hour-label-pm">22</td>
+                                                    <td className="cell-label hour-label hour-label-23 hour-label-pm">23</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-0">Sunday</td>
+                                                    <td className="dayparts-cell day-0 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-0 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-1">Monday</td>
+                                                    <td className="dayparts-cell day-1 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-1 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-2">Tuesday</td>
+                                                    <td className="dayparts-cell day-2 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-2 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-3">Wednesday</td>
+                                                    <td className="dayparts-cell day-3 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-3 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-4">Thursday</td>
+                                                    <td className="dayparts-cell day-4 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-4 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-5">Friday</td>
+                                                    <td className="dayparts-cell day-5 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-5 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="cell-label day-label day-label-6">Saturday</td>
+                                                    <td className="dayparts-cell day-6 hour-0 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-1 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-2 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-3 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-4 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-5 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-6 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-7 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-8 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-9 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-10 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-11 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-12 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-13 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-14 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-15 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-16 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-17 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-18 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-19 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-20 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-21 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-22 hour-active">&nbsp;</td>
+                                                    <td className="dayparts-cell day-6 hour-23 hour-active">&nbsp;</td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <td colSpan="25"></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div className='form-group row'>
+                                    <label htmlFor="keywordTargeting" className="col-sm-3 col-form-label">Keyword Targeting</label>
+                                    <div className="col-sm-9">
+                                        <KeywordTargetingDropDown name="keywordTargeting" value={this.state.model.keywordTargeting} onChange={(event)=> this._handleUserInput(event)}/>
+                                            <h6>Note: When
+                                                <strong>Targeted</strong> is selected, ads will not run unless
+                                                <strong>Keywords</strong> are added to this adgroup</h6>
+                                    </div>
+                                </div>
+                                <div className={ this.state.mode == 'Edit' ? 'hidden' : 'show' }>
+                                    <div className={ 'form-group row '}>
+                                        <label htmlFor="vmkeywords" className="col-sm-3 col-form-label">Keywords</label>
+                                        <div className="col-sm-9">
+                                            <textarea className="form-control" rows="5" name="vmkeywords" value={this.state.model.vmkeywords} onChange={(event)=> this._handleUserInput(event)} />
+                                                <span>Enter one Keyword per line</span>
+                                                <br/>
+                                                <span>Match types may be specified using the formatting:
+                                                    <strong>"Exact match"</strong> |
+                                                    <strong>[Phrase match]</strong> |
+                                                    <strong>Broad match</strong>
+                                                </span>
+                                                <br />
+                                                <span>Bid and override URL can be specified with a | delimiter in the following format: <strong>"Keyword"</strong> | <strong>0.05</strong> | <strong>http://www.smartidea.com</strong></span><br />
+                                                <span>If specifing an override url without a bid use the follorwing format:<strong>"Keyword"</strong> | | <strong>http://www.smartidea.com</strong></span>
+                                        </div>
+                                    </div>
+                                    <div className={ 'form-group row '}>
+                                        <label htmlFor="vmnegativeKeywords" className="col-sm-3 col-form-label">Negative Keywords</label>
+                                        <div className="col-sm-9">
+                                            <textarea className="form-control" rows="5" name="vmnegativeKeywords" value={this.state.model.vmnegativeKeywords} onChange={(event)=>
+                                            this._handleUserInput(event)}/>
+                                                <span>Enter one Keyword per line</span>
+                                                <br/>
+                                                <span>Match types may be specified using the formatting:
+                                                    <strong>"Exact match"</strong> |
+                                                    <strong>[Phrase match]</strong> |
+                                                    <strong>Broad match</strong>
+                                                </span>
+                                        </div>
+                                    </div>
+                                    <div className={ 'form-group row '}>
+                                        <label htmlFor="vmdomains" className="col-sm-3 col-form-label">Domains</label>
+                                        <div className="col-sm-9">
+                                            <textarea className="form-control" rows="5" name="vmdomains" value={this.state.model.vmdomains} onChange={(event)=> this._handleUserInput(event)}/>
+                                                <h6>Domains must be of the form
+                                                    <strong> domain.com</strong>, one per line. <br />
+                                                    <span>Bid can be specified with a | delimiter in the following format: <strong>domain.com</strong> | <strong>0.05</strong></span><br/>
+                                                </h6>
+                                        </div>
+                                    </div>
+                                    <div className={ 'form-group row '}>
+                                        <label htmlFor="vmbannedDomains" className="col-sm-3 col-form-label">Banned Domains</label>
+                                        <div className="col-sm-9">
+                                            <textarea className="form-control" rows="5" name="vmbannedDomains" value={this.state.model.vmbannedDomains} onChange={(event)=>
+                                            this._handleUserInput(event)}/>
+                                                <h6>Domains must be of the form
+                                                    <strong> domain.com</strong>, one per line.</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <div className="col-sm-12 btn-toolbar">
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._next.bind(this)}>Next <span className="glyphicon glyphicon-forward" /></button>                            
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._back.bind(this)}><span className="glyphicon glyphicon-backward" /> Back</button>
+                            <button type="button" className="btn btn-default pull-right" onClick={this.props.changeView.bind(this,null,"exit")}><span className="glyphicon glyphicon-remove" /> Exit Wizard</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        componentWillMount() {
+            if(this.props.model != null){
+                this.setState({ model: this.props.model });
+            }
+        }                
+        componentDidMount() {
+            $(ReactDOM.findDOMNode(this.refs.dpStartDate)).datetimepicker({
+                format: 'YYYY-MM-DD',
+                allowInputToggle: true,
+                useCurrent: true
+            }).on('dp.change',(e) => {
+                let model = this.state.model;
+                model.startDate = moment(e.date).format('YYYY-MM-DD');
+                this.setState({model : model});
+                this._validateField('startDate',model.startDate);
+            }).on('dp.hide',(e) => {
+                let model = this.state.model;
+                model.startDate = moment(e.date).format('YYYY-MM-DD');
+                this.setState({model : model});
+                this._validateField('startDate',model.startDate);
+            });
+            $(ReactDOM.findDOMNode(this.refs.dpEndDate)).datetimepicker({
+                format: 'YYYY-MM-DD',
+                allowInputToggle: true,
+                useCurrent: true
+            }).on('dp.change',(e) => {
+                let model = this.state.model;
+                model.endDate = moment(e.date).format('YYYY-MM-DD');
+                this.setState({model : model});
+                this._validateField('endDate',model.endDate);
+            }).on('dp.hide',(e) => {
+                let model = this.state.model;
+                model.endDate = moment(e.date).format('YYYY-MM-DD');
+                this.setState({model : model});
+                this._validateField('endDate',model.endDate);
+            });
+            let p = this;
+            $('.cell-label').on('click',function(e){
+                let classes = $(this).attr('class');
+                let index = '';
+                if(classes.indexOf('hour-label-') > 0) {
+                    index = $.trim(classes.substr(classes.indexOf('hour-label-') + 11, 2));
+                    if($('.hour-' + index + '.hour-inactive').length <= 7 && $('.hour-' + index + '.hour-inactive').length > 0)
+                        $('.hour-' + index).removeClass('hour-inactive').addClass('hour-active');
+                    else
+                        $('.hour-' + index).removeClass('hour-active').addClass('hour-inactive');
+                }
+                else {
+                    index = $.trim(classes.substr(classes.indexOf('day-label-') + 10, 1));
+                    if($('.day-' + index + '.hour-inactive').length <= 24 && $('.day-' + index + '.hour-inactive').length > 0)
+                        $('.day-' + index).removeClass('hour-inactive').addClass('hour-active');
+                    else
+                        $('.day-' + index).removeClass('hour-active').addClass('hour-inactive');
+                }
+                p._setDayparting();
+            });
+            $('.dayparts-cell').on('click',function(e){
+                e.preventDefault();
+                if($(this).attr('class').indexOf('hour-inactive') > 0)
+                    $(this).removeClass('hour-inactive').addClass('hour-active');
+                else
+                    $(this).removeClass('hour-active').addClass('hour-inactive');
+                p._setDayparting();
+            });
+            $('.dayparts-cell').on('mousedown',function(e){
+                e.preventDefault();
+                $global.mousedown = true;
+                if($(this).attr('class').indexOf('hour-inactive') > 0)
+                    $global.daypartState = 'dragging-active';
+                else
+                    $global.daypartState = 'dragging-inactive';
+                $global.startRow = this.parentNode.rowIndex;
+                $global.startCol = this.cellIndex;
+                //console.log($(this).attr('class'));
+            });
+            $('.dayparts-cell').on('mousemove',function(e){
+                e.preventDefault();
+                if($global.mousedown){
+                    $('.' + $global.daypartState).removeClass($global.daypartState);
+                    //console.log(this.cellIndex + ' r ' + this.parentNode.rowIndex );
+                    let currentRow = this.parentNode.rowIndex;
+                    let currentCol = this.cellIndex;
+                    let startRow = $global.startRow <= currentRow ? $global.startRow : currentRow;
+                    let endRow = currentRow > $global.startRow ? currentRow : $global.startRow;
+                    let startCol = $global.startCol <= currentCol ? $global.startCol : currentCol;
+                    let endCol =  currentCol > $global.startCol ?  currentCol : $global.startCol ;
+                    //console.log('start row ' + startRow + ' end row ' + endRow + ' start col ' + startCol + ' end col ' + endCol);
+                    for(let x = startRow; x <= endRow; x++){
+                        for(let y = startCol; y <= endCol; y++){
+                            $('.day-' + (x-2) + '.hour-' + (y-1)).addClass($global.daypartState);
+                        }
+                    }
+                }
+                    
+            });
+            $('.dayparts-cell').on('mouseup',function(e){
+                e.preventDefault();
+                $global.mousedown = false;
+                if($global.daypartState == 'dragging-active')
+                    $('.' + $global.daypartState).removeClass($global.daypartState).removeClass('hour-inactive').addClass('hour-active');
+                else
+                    $('.' + $global.daypartState).removeClass($global.daypartState).removeClass('hour-active').addClass('hour-inactive');
+                $global.daypartState = '';
+                $global.startRow = -1;
+                $global.startCol = -1;
+                p._setDayparting();
+            });
+            this._setDaypartingCell(true);
+        }
+        _setDayparting(){
+            let daypart = 0;
+            if($('.dayparts-cell.hour-active').length == 168)
+                daypart = 1;
+            if($('.dayparts-cell.hour-0.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-1.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-2.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-3.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-4.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-5.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-6.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-7.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-8.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-9.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-10.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-11.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-12.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-13.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-14.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-15.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-16.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-17.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-18.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-19.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-20.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-21.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-22.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-23.hour-inactive').length == 7 )
+                daypart = 2;
+            if($('.dayparts-cell.hour-0.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-1.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-2.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-3.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-4.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-5.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-6.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-7.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-8.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-9.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-10.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-11.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-12.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-13.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-14.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-15.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-16.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-17.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-18.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-19.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-20.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-21.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-22.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-23.hour-active').length == 7 )
+                daypart = 3;
+            if($('.dayparts-cell.hour-0.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-1.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-2.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-3.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-4.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-5.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-6.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-7.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-8.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-9.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-10.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-11.hour-active').length == 7 &&
+            $('.dayparts-cell.hour-12.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-13.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-14.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-15.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-16.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-17.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-18.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-19.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-20.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-21.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-22.hour-inactive').length == 7 &&
+            $('.dayparts-cell.hour-23.hour-inactive').length == 7 )
+                daypart = 4;
+            if($('.dayparts-cell.day-0.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-1.hour-active').length == 24 &&
+            $('.dayparts-cell.day-2.hour-active').length == 24 &&
+            $('.dayparts-cell.day-3.hour-active').length == 24 &&
+            $('.dayparts-cell.day-4.hour-active').length == 24 &&
+            $('.dayparts-cell.day-5.hour-active').length == 24 &&
+            $('.dayparts-cell.day-6.hour-inactive').length == 24)
+                daypart = 5;
+            if($('.dayparts-cell.day-0.hour-active').length == 24 &&
+            $('.dayparts-cell.day-1.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-2.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-3.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-4.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-5.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-6.hour-active').length == 24)
+                daypart = 6;
+            if($('.dayparts-cell.day-0.hour-active').length == 24 &&
+            $('.dayparts-cell.day-1.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-2.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-3.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-4.hour-inactive').length == 24 &&
+            $('.dayparts-cell.day-5.hour-active').length == 24 &&
+            $('.dayparts-cell.day-6.hour-active').length == 24)
+                daypart = 7;
+
+            let model = this.state.model;
+            model.dayparting = daypart;
+            this.setState({ model: model});
+        }
+        _setDaypartingCell(load) {
+            if(this.state.model.dayparting != 0) {
+                let dayType = this.state.model.dayparting;
+                switch(dayType) {
+                    case "1":
+                        $('.dayparts-cell.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        break;
+                    case "2":
+                        $('.dayparts-cell.hour-0.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-5.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-6.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-7.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-8.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-9.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-10.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-11.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        
+                        $('.dayparts-cell.hour-12.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-13.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-14.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-15.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-16.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-17.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        
+                        $('.dayparts-cell.hour-18.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-19.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-20.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-21.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-22.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-23.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        break;
+                    case "3":
+                        $('.dayparts-cell.hour-0.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-5.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-6.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-7.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-8.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-9.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-10.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-11.hour-active').removeClass('hour-active').addClass('hour-inactive');                        
+                        $('.dayparts-cell.hour-12.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-13.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-14.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-15.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-16.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-17.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        
+                        $('.dayparts-cell.hour-18.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-19.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-20.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-21.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-22.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-23.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        break;
+                    case "4":
+                        $('.dayparts-cell.hour-0.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-5.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-6.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-7.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-8.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-9.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-10.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.hour-11.hour-inactive').removeClass('hour-inactive').addClass('hour-active');                        
+                        $('.dayparts-cell.hour-12.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-13.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-14.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-15.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-16.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-17.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-18.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-19.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-20.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-21.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-22.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.hour-23.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        break;
+                    case "5":
+                        $('.dayparts-cell.day-0.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-1.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-2.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-3.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-4.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-5.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-6.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        break;
+                    case "6":
+                        $('.dayparts-cell.day-0.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-5.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-6.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        break;
+                    case "7":
+                        $('.dayparts-cell.day-0.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-1.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-2.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-3.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-4.hour-active').removeClass('hour-active').addClass('hour-inactive');
+                        $('.dayparts-cell.day-5.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        $('.dayparts-cell.day-6.hour-inactive').removeClass('hour-inactive').addClass('hour-active');
+                        break;
+
+                }
+            }
+            else
+            {
+                if(load) {
+                    let daypartArr = this.state.model.dayParts.split('\n');
+                    _.each(daypartArr, (d) => {
+                        let hourArr = d.split(',');
+                        _.each(hourArr, (h)=>{
+                            let part = h.split(':');
+                            let dayNo = this._dayToNumber(part[0]);
+                            let hourNo = part[1];
+                            if(part[2] == 'A')
+                                $('.dayparts-cell.day-' + dayNo + '.hour-' + hourNo).removeClass('hour-inactive').addClass('hour-active');
+                            else
+                                $('.dayparts-cell.day-' + dayNo + '.hour-' + hourNo).removeClass('hour-active').addClass('hour-inactive');
+                        });
+                    });
+                }
+            }
+        }
+        _dayToNumber(day){
+            switch(day) {
+                case 'sun':
+                    return 0;
+                case 'mon' :
+                    return 1;
+                case 'tue' :
+                    return 2;
+                case 'wed' :
+                    return 3;
+                case 'thu' :
+                    return 4;
+                case 'fri' :
+                    return 5;
+                case 'sat' :
+                    return 6;
+            }
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.name == 'active' ? e.target.checked : e.target.name == 'impressions' && !(isNaN(e.target.value)) && e.target.value != '' ? parseInt(e.target.value) :  e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;                    
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+            if(name == 'dayparting')
+                this._setDaypartingCell(false);
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors;
+            let errorMsgs = this.state.formErrorMessage;
+            let model = this.state.model;
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'dailyBudget' :
+                    fieldErrors.dailyBudget = $.trim(value) === '' ? ' has-error' : parseFloat(value) < 1 ? ' has-error' : '' ;
+                    if(parseFloat(value) < 1)
+                        errorMsgs.dailyBudget = 'Daily budget must be at least $1.00.';
+                    else
+                        errorMsgs.dailyBudget = '';
+                    break;
+                case 'bid' :
+                    fieldErrors.bid = $.trim(value) === '' ? ' has-error' : parseFloat(value) < 0 ? ' has-error' : '' ;
+                    break;
+                case 'startDate':
+                    fieldErrors.startDate = value == '' ? ' has-error' : !moment(value).isValid() ? ' has-error' : '';
+                    break;
+                case 'endDate':
+                    fieldErrors.endDate = value == '' || value == 'Unlimited' ? '' : !moment(value).isValid() ? ' has-error' : '';
+                    if(fieldErrors.startDate == '' && fieldErrors.endDate == '' && value != 'Unlimited' && value != ''){
+                        if(moment(this.state.model.startDate).isAfter(this.state.model.endDate)){
+                            fieldErrors.endDate = ' has-error';
+                            errorMsgs.endDate = 'End date must not be earlier than start date.';
+                        }
+                        else
+                            errorMsgs.endDate = '';
+                    }
+                    break;
+                case 'products':
+                    let products = this.refs.products._getSelectedProducts();
+                    fieldErrors.products = products.length == 0 ? " has-error" : '';
+                    errorMsgs.products = products.length == 0 ? 'Products is required' : '';
+                    model.products = products;
+                    this.setState({model : model});
+                    break;
+                @if (User.IsInRole("Admin")) {
+                <text>
+                case 'tiers' :
+                    let tiers = this.refs.tiers._getSelectedTiers();
+                    fieldErrors.tiers = tiers.length == 0 ? " has-error" : '';
+                    errorMsgs.tiers = tiers.length == 0 ? 'Tiers is required' : '';
+                    model.tiers = tiers;
+                    this.setState({model : model});
+                    break;
+                </text>}
+                case 'impressions' :
+                    fieldErrors.impressions = value == '' || value == '0' ? '' : parseInt(value) < 0 ? ' has-error' : '';
+                    break;
+                case 'dayparting' :
+                    let dpString = this._generateDayPartString();
+                    model.dayParts = dpString;
+                    this.setState({model : model});
+                    fieldErrors.dayparting = dpString.indexOf('A') == -1 ? " has-error" : '';
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors, formErrorMessage: errorMsgs});
+        }
+        _isValid() {
+            _.each(this.state.model,(i,e) =>{
+                this._validateField(e,this.state.model[e]);
+            });
+            return this._formIsValid();
+        }
+        _generateDayPartString() {
+            let daypartstring = '';
+            
+            $('.dayparts-cell').each(function(e){
+                let classStr = $(this).attr('class').replace('dayparts-cell ','').split(' ');
+                let day = '';
+                let hour = classStr[1].replace('hour-','');
+                let status = classStr[2] == 'hour-active' ? 'A' : 'I';
+                let dayNo = classStr[0].replace('day-','');
+                switch(dayNo){
+                    case '0' : 
+                        day = 'sun';
+                        break;
+                    case '1' : 
+                        day = 'mon';
+                        break;
+                    case '2' : 
+                        day = 'tue';
+                        break;
+                    case '3' : 
+                        day = 'wed';
+                        break;
+                    case '4' : 
+                        day = 'thu';
+                        break;
+                    case '5' : 
+                        day = 'fri';
+                        break;
+                    case '6' : 
+                        day = 'sat';
+                        break;
+                }
+                daypartstring += day + ":" + hour + ":" + status;
+
+                if(hour == "23")
+                    daypartstring += '\n';
+                else 
+                    daypartstring += ",";
+            });
+            return daypartstring;
+        }
+        _unlimitedClicked(control){
+            let model = this.state.model;
+            var formErrors = this.state.formErrors;
+            if(control == 'endDate'){
+                model.endDate = 'Unlimited';
+                formErrors.endDate = '';
+            }
+            if(control == 'impressions') {
+                model.impressions = 0;
+                formErrors.impressions = '';
+            }
+            this.setState({
+                model: model,
+                formErrors: formErrors
+            });
+        }
+        _formIsValid(){
+            if(this.state.formErrors.name === '' &&
+                    this.state.formErrors.startDate === '' &&
+                    this.state.formErrors.endDate === '' &&
+                    this.state.formErrors.dailyBudget === '' &&
+                    this.state.formErrors.bid === '' &&
+                    this.state.formErrors.products === '' &&
+                    this.state.formErrors.tiers === '' &&
+                    this.state.formErrors.impressions === '' &&
+                    this.state.formErrors.dayparting === '')
+                    return true;
+            else {
+                //console.log(this.state.formErrors);
+                toastr.warning('One or more fields are currently invalid.','Validation Error');
+                return false;
+            }
+        }
+        _next() {
+            if(this._isValid()) {
+                if(this.state.model.endDate == 'Unlimited'){
+                    let model = this.state.model;
+                    model.endDate = '';
+                    this.setState({ model: model});
+                }
+                //console.log(this.state.model);
+                this.props.changeView(this.state.model,'next');                
+            }
+        }
+        _back() {
+            this.props.changeView(this.state.model,'back');
+        }
+    }
+    class ProductList extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                selectedProducts:  this.props.selected
+            }
+        }
+        render() {
+            let options = $global.products.map((d) =>{
+                return(<div className="checkbox"  key={d.Id}>
+                    <label>
+                        <input type="checkbox" name={d.Name} value={d.Id} onChange={(event)=> this._toggleCheckbox(event,d.Id)} defaultChecked={ _.where(this.state.selectedProducts, {id: d.Id}).length > 0 ? true : false }/>
+                        {d.Name}
+                    </label>
+                </div>);
+            });
+            return(
+                <div>
+                    {options}
+                </div>               
+                );
+        }
+        _toggleCheckbox(e,id) {
+            const name = e.target.name;
+            const value = e.target.checked;
+            let prods = this.state.selectedProducts;
+            if(value)
+                prods.push({id: id, name: name});
+            else
+                prods = $.grep(prods, function(e){
+                    return e.id != id;
+                });
+            this.setState({ selectedProducts : prods });
+        }
+        _getSelectedProducts(){
+            return this.state.selectedProducts;
+        }
+    }
+    class TierList extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                selectedTiers: this.props.selected
+            }
+        }
+        render() {
+            let options = $global.tiers.map((d) => {
+                return(<div className="checkbox"  key={d.Id}>
+                    <label>
+                        <input type="checkbox" name={d.Name} value={d.Id} onChange={(event)=> this._toggleCheckbox(event,d.Id)} defaultChecked={ _.where(this.state.selectedTiers, {id: d.Id}).length > 0 ? true : false } />
+                        {d.Name}
+                    </label>
+                </div>);
+            });
+            return(
+                <div>
+                    {options}
+                </div>               
+                );
+        }
+        _toggleCheckbox(e,id) {
+            const name = e.target.name;
+            const value = e.target.checked;
+            let tiers = this.state.selectedTiers;
+            if(value)
+                tiers.push({id: id, name: name});
+            else
+                tiers = $.grep(tiers, function(e){
+                    return e.id != id;
+                });
+            this.setState({ selectedTiers : tiers });
+        }
+        _getSelectedTiers(){
+            return this.state.selectedTiers;
+        }
+    }
+    class DayPartingDropDown extends React.Component{
+        render() {
+            let type = this.props.type;
+            let options = $global.dayPartingTypes.map(function(d){
+                return(<option key={d.Value} value={d.Value}>{d.Key}</option>);
+            });
+            return (
+                <select className="form-control" name={this.props.name} value={this.props.value} onChange={this.props.onChange}>
+                    {options}
+                </select>
+            );
+        }
+    }
+    class KeywordTargetingDropDown extends React.Component {
+        render() {
+            let type = this.props.type;
+            let options = $global.keywordTargetingTypes.map(function(d){
+                return(<option key={d.Value} value={d.Value}>{d.Key}</option>);
+            });
+            return (
+                <select className="form-control" name={this.props.name} value={this.props.value} onChange={this.props.onChange}>
+                    {options}
+                </select>
+            );
+        }
+    }
+
+    class AdView extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id : -1,
+                    name : '',
+                    active : true,
+                    clickUrl: '',
+                    conversionDomain: '',
+                    thirdPartyImpressionTracking: ''
+                },
+                formErrors: {
+                    name: '',
+                    clickUrl: ''              
+                }
+            }
+        }
+        render() {
+            return(
+                <div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <h4>Ad</h4>
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <label htmlFor="active" className="col-sm-3 col-form-label">Status</label>
+                        <div className="col-sm-9">
+                            <div id="toggles">
+                                <input type="checkbox" name="active" id="checkbox1" className="ios-toggle" onChange={(event)=> this._handleUserInput(event)} defaultChecked={this.state.model.active} />
+                                <label htmlFor="checkbox1" className="checkbox-label" data-off="inactive" data-on="active"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.name}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Name</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="name" placeholder="Ad Name" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.name} />
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.clickUrl}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Click Url</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="clickUrl" placeholder="e.g. http://www.example.com" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.clickUrl} />
+                        </div>
+                    </div>
+                    <div className='row'>
+                        <div className="col-sm-offset-3 col-sm-5">
+                            <div className="panel panel-default">
+                                <div className="panel-heading"><strong>Dynamic Macros - Text Values</strong></div>
+                                <div className="panel-body">
+                                    <dl className="dl-horizontal">
+                                        <dt>Ad ID</dt>
+                                        <dd>{'{AD_ID}'}</dd>
+                                        <dt>Agency ID</dt>
+                                        <dd>{'{AGY_ID}'}</dd>
+                                        <dt>Advertiser ID</dt>
+                                        <dd>{'{AID}'}</dd>
+                                        <dt>Campaign ID</dt>
+                                        <dd>{'{CID}'}</dd>
+                                        <dt>City</dt>
+                                        <dd>{'{CITY}'}</dd>
+                                        <dt>Country Code</dt>
+                                        <dd>{'{COUNTRY}'}</dd>
+                                        <dt>DMA Region</dt>
+                                        <dd>{'{DMA}'}</dd>
+                                        <dt>Domain</dt>
+                                        <dd>{'{DOMAIN}'}</dd>
+                                        <dt>Ad Group ID</dt>
+                                        <dd>{'{GID}'}</dd>
+                                        <dt>Matched Keyword</dt>
+                                        <dd>{'{KEYWORD}'}</dd>
+                                        <dt>Keyword Category</dt>
+                                        <dd>{'{KEYWORD_CATEGORY}'}</dd>
+                                        <dt>Matched Keyword (spaces replaced with hyphens)</dt>
+                                        <dd>{'{NEAT_KEYWORD}'}</dd>
+                                        <dt>Postal/Zip Code</dt>
+                                        <dd>{'{POSTAL}'}</dd>
+                                        <dt>Product</dt>
+                                        <dd>{'{PRODUCT}'}</dd>
+                                        <dt>Searched Query</dt>
+                                        <dd>{'{QUERY}'}</dd>
+                                        <dt>State/Province</dt>
+                                        <dd>{'{REGION}'}</dd>
+                                        <dt>Site Category</dt>
+                                        <dd>{'{SITE_CATEGORY}'}</dd>
+                                        <dt>Source ID</dt>
+                                        <dd>{'{SOURCE_ID}'}</dd>
+                                        <dt>Tier</dt>
+                                        <dd>{'{TIER}'}</dd>
+                                    </dl>                                    
+                                </div>
+                            </div>
+                            <span>Note: All dynamic macros must be entered in {'{CAPITAL_LETTERS}'}</span>
+                            <br />
+                            <span>You can place these macros inside the Click URL, Display URL, Title, or Description of your ad. The macro will be dynamically replaced when the ad is displayed.</span>
+                            <br /><br />
+                        </div>
+                        <div className="col-sm-4">
+                            
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Conversion Pixel</label>
+                        <div className="col-sm-9">
+                            <label>{'<img src="https://conversion.adcenter.popmonetize.com/conversion/?pixel=1&amp;aid=63" height="1" width="1" >'}</label>
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Postback URL</label>
+                        <div className="col-sm-9">
+                            <label>{'https://conversion.adcenter.popmonetize.com/conversion/?s2s=1&aid=63&id=*{AD_ID}*'}</label>
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Conversion Domain</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="conversionDomain" placeholder="e.g. example.com (optional)" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.conversionDomain} />
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Third Party Impression Tracking</label>
+                        <div className="col-sm-9">
+                            <textarea rows="5" className='form-control' name="thirdPartyImpressionTracking" placeholder="Add Tracking Code" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.thirdPartyImpressionTracking} />
+                            <br />
+                            <span>You may enter HTML code (<code>IMG</code> tags or <code>SCRIPT</code> tags) for any third-party trackers you may have.</span>
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <div className="col-sm-12 btn-toolbar">
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._next.bind(this)}>Next <span className="glyphicon glyphicon-forward" /></button>
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._back.bind(this)}><span className="glyphicon glyphicon-backward" /> Back</button>
+                            <button type="button" className="btn btn-default pull-right" onClick={this.props.changeView.bind(this,null,"exit")}><span className="glyphicon glyphicon-remove" /> Exit Wizard</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        componentWillMount() {
+            if(this.props.model != null) {
+                this.setState({
+                    model: this.props.model
+                });
+            }
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.name == 'active' ? e.target.checked : e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;                    
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors;
+            let model = this.state.model;
+            
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'clickUrl' :
+                    fieldErrors.clickUrl= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors});
+        }
+        _isValid() {
+            _.each(this.state.model,(i,e) =>{
+                this._validateField(e,this.state.model[e]);
+            });
+            return this._formIsValid();
+        }
+        _formIsValid(){
+            if(this.state.formErrors.name === '' &&
+                    this.state.formErrors.clickUrl === '') 
+                return true;
+            else{
+                toastr.warning('One or more fields are currently invalid.','Validation Error');
+                return false;
+            }
+        }
+        _next() {
+            if(this._isValid()) {
+                //console.log(this.state.model);
+                this.props.changeView(this.state.model,'next');                
+            }
+        }
+        _back() {
+            this.props.changeView(this.state.model,'back');
+        }
+
+    }
+
+    class SummaryView extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                adGroup: {
+                    name: '<select ad group>',
+                    bid: '<select ad group>',
+                    dailyBudget: '<select ad group>',
+                    duration: '<select ad group>'
+                },
+                errorMessage: ''
+            }
+        }
+        render() {
+            return(
+                <div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <h4>You're almost done!</h4>
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <h5>Your campaign is ready to be created.</h5>
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <label className="label label-danger">{this.state.errorMessage}</label>
+                        </div>
+                    </div>   
+                    <div className="form-group row">
+                        <div className="panel panel-default">
+                            <div className="panel-heading"><strong>Ad Group Details</strong></div>
+                            <div className="panel-body">
+                                <div className='form-group row '>
+                                    <label className="col-sm-4">Name</label>
+                                    <label className="col-sm-8">{this.state.adGroup.name}</label>
+                                </div>
+                                <div className='form-group row '>
+                                    <label className="col-sm-4">Bid</label>
+                                    <label className="col-sm-8">{this.state.adGroup.bid}</label>
+                                </div>
+                                <div className='form-group row '>
+                                    <label className="col-sm-4">Daily Budget</label>
+                                    <label className="col-sm-8">{this.state.adGroup.dailyBudget}</label>
+                                </div>
+                                <div className='form-group row '>
+                                    <label className="col-sm-4">Duration</label>
+                                    <label className="col-sm-8">{this.state.adGroup.duration}</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <div className="col-sm-12 btn-toolbar">
+                            <button type="button" className="btn btn-success pull-right" onClick={this._finish.bind(this)}><span className="glyphicon glyphicon-flag" /> Finish</button>
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._back.bind(this)}><span className="glyphicon glyphicon-backward" /> Back</button>
+                            <button type="button" className="btn btn-default pull-right" onClick={this.props.changeView.bind(this,null,"exit")}><span className="glyphicon glyphicon-remove" /> Exit Wizard</button>                          
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        componentWillMount() {
+            if(this.props.adgroup != null) {
+                let adGroup = this.state.adGroup;
+                let selectedAdGroup = this.props.adgroup;
+                adGroup.name = selectedAdGroup.name;
+                adGroup.bid = '$' + parseFloat(selectedAdGroup.bid).toFixed(4);
+                adGroup.dailyBudget = parseFloat(selectedAdGroup.dailyBudget) == 0 ? 'Unlimited' : '$' + parseFloat(selectedAdGroup.dailyBudget).toFixed(2);
+                if(selectedAdGroup.endDate == "")
+                    adGroup.duration = 'Unlimited';
+                else {
+                    let duration = moment.duration(moment(selectedAdGroup.endDate).diff(selectedAdGroup.startDate));
+                    let days = duration.asDays();
+                    adGroup.duration = days + ' Day(s)';
+                }
+                this.setState({adGroup: adGroup});
+            }                
+        }
+        _finish() {
+            let campaign = this.props.campaign;
+            let adgroup = this.props.adgroup;
+            let ad = this.props.ad;
+            let m = {
+                campaign: campaign,
+                adgroup: adgroup,
+                ad: ad
+            };
+            let model = JSON.stringify(m);
+            $.ajax({
+                url: $global.uriPath + '/Campaign/Wizard',
+                type: 'POST',
+                data: model,
+                contentType:"application/json; charset=utf-8"              
+            }).done(function(data){
+                window.location.href = $global.uriPath + '/Campaign/';
+            }).fail((xhr, textStatus, error) => {
+                this.setState({errorMessage : error});
+            });                    
+        }
+        _back() {
+            this.props.changeView(null,'back');
+        }
+    }
+
+    ReactDOM.render(
+        <App />, document.getElementById('reactContent')
+    );
+</script>

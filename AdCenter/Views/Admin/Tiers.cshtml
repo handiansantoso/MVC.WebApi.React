@@ -1,0 +1,244 @@
+﻿@{ 
+    ViewBag.Title = "Tiers";
+}
+<h3><span class="glyphicon glyphicon-flash" aria-hidden="true"></span> Tiers</h3>
+<script type="text/javascript">
+    var $global = window.$global = {};
+    $global.uriPath = @Html.Raw(ViewBag.UriPath);
+</script>
+<div id="reactContent">
+
+</div>
+<script type="text/babel">
+    class App extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                model: []
+            }
+        }
+        componentWillMount() {
+            this._refreshTiers();
+        }
+        render() {
+            return(
+                <div>
+                    <TierModal ref="tierModal"  onSuccess={this._refresh.bind(this)} />
+                    <div className="well well-small">    
+                        <div className="form-inline btn-toolbar">                                
+                            <div className="form-inline pull-right">
+                                <button type="button" className="btn btn-primary pull-left" onClick={this._showCreateModal.bind(this)}><span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;New</button>
+                            </div>                            
+                        </div>                         
+                    </div>
+                    
+                    <div  className="panel panel-default">
+                        <TierTable data={this.state.model} edit={this._showUpdateModal.bind(this)} defaultTier={this._setDefaultTier.bind(this)} />
+                    </div>
+                </div>
+            );
+        }
+        _showCreateModal() {
+            this.refs.tierModal._showCreate();
+        }
+        _showUpdateModal(item) {
+            this.refs.tierModal._showEdit(item);
+        }
+        _refreshTiers() {
+            $.get($global.uriPath + '/Admin/AllTiers', function(data){
+                this.setState({
+                    model: data                    
+                });
+            }.bind(this));
+        }
+        _setDefaultTier(id) {
+            let model = JSON.stringify({tierId:id});
+            $.ajax({
+                    url: $global.uriPath + '/Admin/SetDefaultTier',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                }).done((data)=>{
+                    this._refreshTiers();
+                }).fail((xhr, textStatus, error) => {
+                    toastr.error(error);
+                });     
+        }
+        _refresh(){
+            this._refreshTiers();
+            this.refs.tierModal._hide();
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+        }
+    }
+    const TierTable = (props) => {
+        if(props.data.length == 0)
+            return (<span>There is no existing tier records.</span>);
+        let rows = props.data.map((d)=>
+            <tr key={d.Id}>
+                <td>{d.Id}</td>
+                <td>{d.Name}</td>
+                <td><input type="radio" checked={d.Default} onChange={props.defaultTier.bind(this,d.Id)}/> </td>
+                <td>
+                    <a className="glyphicon glyphicon-edit" href="#" onClick={props.edit.bind(this,d)}  />
+                </td>
+            </tr>
+        );
+        return (
+            <table className="table table-bordered table-responsive">
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>Name</td>
+                        <td>Default</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>    
+         );
+    }
+    class TierModal extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id : -1,
+                    name : ''
+                },
+                show: false,
+                mode: 'Create',
+                errorMessage: '',
+                formErrors: {
+                    name: ''
+                }
+            }
+        }
+        render(){
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog"  data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button"className="close" data-dismiss="modal" aria-label="Close"  onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">{this.state.mode} Tier</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className='form-group row'>
+                                <div className='col-sm-12'>
+                                    <label className="label label-danger">{this.state.errorMessage}</label>
+                                </div>
+                            </div>
+                            <div className={'form-group row ' + this.state.formErrors.name}>
+                                <label htmlFor="inputName" className="col-sm-3 col-form-label">Name</label>
+                                <div className="col-sm-9">
+                                    <input className='form-control' name="name" onChange={(event) => this._handleUserInput(event)} placeholder="Tier Name" value={this.state.model.name} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this._update.bind(this)}>Save changes</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+        }
+
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors});
+        }
+        _formIsValid() {
+            return this.state.formErrors.name === '';
+        }
+        _isValid() {
+            _.each(this.state.model,(i,e) =>{
+                this._validateField(e,this.state.model[e]);
+            });
+            return this._formIsValid();
+        }
+        componentDidUpdate() {
+            let $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+        _hide() {
+            this.setState({show:false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _update() {
+            if(this._isValid()) {
+                let onSuccess = this.props.onSuccess;
+                    
+                let model = JSON.stringify(this.state.model);
+                console.log(model);
+                $.ajax({
+                    url: $global.uriPath + '/Admin/Tier',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                }).done(function(data){
+                    onSuccess();
+                }).fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });                
+            }
+        }
+        _showCreate(){
+            this.setState({
+                model: {
+                    id : -1,
+                    name : ''
+                },
+                show: true,
+                mode: 'Create',
+                errorMessage: '',
+                formErrors: {
+                    name: ''
+                }
+            });
+        }
+        _showEdit(item){
+            this.setState({
+                model: {
+                    id : item.Id,
+                    name : item.Name
+                },
+                show: true,
+                mode: 'Update',
+                errorMessage: '',
+                formErrors: {
+                    name: ''
+                }
+            });
+        }
+    }
+    ReactDOM.render(
+        <App />, document.getElementById('reactContent')
+    );
+</script>

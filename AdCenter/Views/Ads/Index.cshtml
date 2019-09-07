@@ -1,0 +1,754 @@
+﻿@{ 
+    ViewBag.Title = "Ads Dashboard";
+}
+<h3><span class="glyphicon glyphicon-picture" aria-hidden="true"></span> Ads</h3>
+<script type="text/javascript">
+    var $global = window.$global = {};
+    $global.adGroups = @Html.Raw(ViewBag.AdGroups);
+    $global.adGroupId = @Html.Raw(ViewBag.AdGroupId);
+    $global.uriPath = @Html.Raw(ViewBag.UriPath);
+</script>
+<div id="reactContent">
+
+</div>
+<script type="text/babel">
+    class App extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                view: "main",
+                model: null,
+                adGroupId: $global.adGroupId
+            }
+        }
+        render() {
+            if(this.state.view == "main")
+                return (<MainView changeView={this._changeView.bind(this)} adGroup={this.state.adGroupId} />);
+            if(this.state.view == "update")
+                return (<EditAdView changeView={this._changeView.bind(this)} model={this.state.model} adGroup={this.state.adGroupId} />);
+        }
+        _changeView(model,view,id) {
+            this.setState({
+                view: view,
+                model: model,
+                adGroupId: id
+            })
+        }
+    }
+    class MainView extends React.Component {
+        constructor(props){
+            super(props);
+            this.state = {
+                filteredData: [],
+                originalData: [],
+                filterAdGroup: this.props.adGroup
+            }
+        }
+        componentWillMount(){
+            $.get($global.uriPath + '/Ads/Ads', function(data){
+                this.setState({
+                    originalData: data,
+                    filteredData: data                    
+                },()=>{
+                    this._filterData();
+                });
+            }.bind(this));
+        }
+        _filterData(e){
+            let name = '';
+            let value = '';
+            if(typeof e !== 'undefined'){
+                name = e.target.name;
+                value = e.target.value;
+            }            
+
+            let filtered = [];
+            let original = this.state.originalData;            
+            let adGroup = this.state.filterAdGroup;
+            if(typeof e !== 'undefined')
+            {
+                switch(name)
+                {
+                    case 'filterAdGroup':
+                        adGroup = value;
+                        break;
+                }
+            }
+                
+            if(adGroup == '-1')
+                filtered = original;
+            else {
+                if(adGroup != '-1')
+                    filtered = original.filter(c=>c.AdGroupId == adGroup);    
+            }
+            this.setState({
+                filteredData: filtered
+            });
+            if(typeof e !== 'undefined')
+                this.setState({[name]:value});
+        }
+        render() {
+            return(
+                <div>
+                    <CloneModal ref="cloneModal" onSuccess={this._refreshAdData.bind(this)} />
+                    <DeleteModal ref="deleteModal" delete={this._deleteAd.bind(this)}/>
+                    <div className="well well-small">    
+                        <div className="form-inline btn-toolbar">                                
+                            <div className="input-group">
+                                <span className="input-group-addon">Ad Group</span>
+                                <AdGroupList type='filter' name='filterAdGroup' value={this.state.filterAdGroup} onChange={(event) => this._filterData(event)}/>
+                            </div>
+                            <div className="form-inline pull-right">
+                                <button type="button" className="btn btn-primary pull-left" onClick={this.props.changeView.bind(this,null,"update",this.state.filterAdGroup)}><span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;New</button>
+                            </div>                            
+                        </div>                         
+                    </div>
+                    
+                    <div  className="panel panel-default">
+                        <AdsTable data={this.state.filteredData} changeView={this.props.changeView} updateStatus={this._updateStatus.bind(this)} adGroup={this.state.filterAdGroup} duplicate={this._showDuplicateAd.bind(this)} delete={this._showDeleteModal.bind(this)} />
+                    </div>
+                </div>
+            );
+        }
+        _updateStatus(id,value){
+            let m = {id: id, value: value };
+            let model = JSON.stringify(m);
+            //console.log(m);
+            $.ajax({
+                url: $global.uriPath + '/Ads/UpdateStatus',
+                type: 'POST',
+                data: model,
+                contentType:"application/json; charset=utf-8"
+            }).done((data) => {
+                let original = this.state.originalData;
+                let index = _.findIndex(original,(x) => { return x.Id == id });
+                original[index] = data;
+                this.setState({originalData : original}, ()=>{
+                    this._filterData();
+                });
+                toastr.success('Status for ad has been updated.', 'Update Status');
+            }).fail((xhr, textStatus, error) => {
+                toastr.error('Unable to update status. Please refresh and try again.','Update Error');
+            });                 
+        }
+        _refreshAdData() {
+            this.refs.cloneModal._hide();
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+            $.get($global.uriPath + '/Ads/Ads', function(data){
+                this.setState({
+                    originalData: data                    
+                },()=>{
+                    this._filterData();
+                });
+            }.bind(this));
+        }
+        _showDeleteModal(item) {
+            this.refs.deleteModal._show(item);
+        }
+        _showDuplicateAd(ID,Name,AdGroupId){
+            this.refs.cloneModal._show(ID,Name,AdGroupId);
+        }
+        _deleteAd(item) {
+            let m = {id: item.Id};
+            let id = item.Id;
+            let name = item.Name;
+            let model = JSON.stringify(m);
+            @if(User.IsInRole("Admin")) {      
+                <text>      
+                $.ajax({
+                    url: $global.uriPath + '/Ads/DeleteAd',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                }).done((data) => {
+                    let original = this.state.originalData;
+                    let index = _.findIndex(original,(x) => { return x.Id == id });
+                    original.splice(index,1);
+                    this.setState({originalData : original}, ()=>{
+                        this._filterData();
+                    });
+                    toastr.success('Ad ' + name + ' has been deleted.', 'Delete Status');
+                    this.refs.deleteModal._hide();
+                    $('body').removeClass('modal-open');
+                    $('.modal-backdrop').remove();
+                }).fail((xhr, textStatus, error) => {
+                    toastr.error('Unable to delete ad. Please refresh and try again.','Delete Error');
+                });
+                </text>
+            }    
+        }
+    }
+    const AdGroupList = (props) => {
+        let type = props.type;
+        let options = $global.adGroups.map(function(d){
+            if(type == 'filter' && d.Id == -1)
+                return(<option key={d.Id} value={d.Id}>- All Ad Groups -</option>);
+            else
+                return(<option key={d.Id} value={d.Id}>{d.Name}</option>);
+        });
+        return (
+            <select className="form-control" name={props.name} value={props.value} onChange={props.onChange}>
+                {options}
+            </select>
+        );
+    }
+    const AdsTable = (props) => {
+        if(props.data.length == 0)
+            return (<span>There is no existing ad records or filter returns no result.</span>); 
+        let rows = props.data.map((d)=>
+            <tr key={d.Id}>
+                <td>{d.Id}</td>
+                <td>
+                    <div id="toggles">
+                        <input type="checkbox" name="active" className="ios-toggle" id={"checkbox" + d.Id} onChange={props.updateStatus.bind(this,d.Id,!d.Active)} defaultChecked={d.Active} />
+                        <label htmlFor={"checkbox" + d.Id} className="checkbox-label" data-off="" data-on=""></label>
+                    </div>
+                </td>
+                <td>
+                    <div className="status-cell">
+                        <div className="status">
+                            <span className={ d.Status == 'Active' ? 'status-active' : d.Status == 'Inactive' ? 'status-inactive' : 'status-pending' }>
+                                <i className={'fa fa-fw ' + (d.Status == 'Active' || d.Status == 'Inactive' ? 'fa-circle' : 'fa-minus-circle')} />
+                            </span>
+                            {d.Status}
+                        </div>
+                        <div className="reason hidden-xs">
+                            {d.Reason}
+                        </div>
+                    </div>
+                </td>
+                <td>{d.Name}</td>
+                <td><a href={$global.uriPath + '/Ads/Index/' + d.AdGroupId}>{d.AdGroupName}</a></td>
+                <td>{d.Search}</td>
+                <td>{d.Impression}</td>
+                <td>$ {d.Spend}</td>
+                <td><a className="glyphicon glyphicon-duplicate" href="#" onClick={props.duplicate.bind(this,d.Id,d.Name,d.AdGroupId)} ></a>&nbsp;
+                    <a className="glyphicon glyphicon-edit" href="#" onClick={props.changeView.bind(this,d,"update",props.adGroup)} />&nbsp;
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a className="glyphicon glyphicon-trash" href="#" onClick={props.delete.bind(this,d)} />
+                    }
+                </td>
+            </tr>
+        );
+        return (                
+            <table className="table table-bordered table-responsive">
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>Active</td>
+                        <td></td>
+                        <td>Name</td>
+                        <td><span className="glyphicon glyphicon-list-alt" aria-hidden="true"></span> Ad Group</td>
+                        <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Searches</td>
+                        <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Impressions (Pop)</td>                            
+                        <td><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> Spend</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>    
+        );
+    }
+    class EditAdView extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                model: {
+                    id : -1,
+                    name : '',
+                    adGroupId: -1,
+                    active : true,
+                    clickUrl: '',
+                    conversionDomain: '',
+                    thirdPartyImpressionTracking: ''
+                },
+                adGroup: {
+                    name: '<select ad group>',
+                    bid: '<select ad group>',
+                    dailyBudget: '<select ad group>',
+                    duration: '<select ad group>'
+                },
+                mode: 'Create' ,
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    adGroupId:'',
+                    clickUrl: ''              
+                }
+            }
+        }
+        render(){
+            return(
+                <div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <h4>{this.state.mode} Ad</h4>
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <label className="label label-danger">{this.state.errorMessage}</label>
+                        </div>
+                    </div>                    
+                    <div className='form-group row'>
+                        <label htmlFor="active" className="col-sm-3 col-form-label">Active</label>
+                        <div className="col-sm-9">
+                            <div id="toggles">
+                                <input type="checkbox" name="active" id="checkbox_1" className="ios-toggle" onChange={(event)=> this._handleUserInput(event)} defaultChecked={this.state.model.active} />
+                                <label htmlFor="checkbox_1" className="checkbox-label" data-off="inactive" data-on="active"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.adGroupId}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Ad Group</label>
+                        <div className="col-sm-9">
+                            <AdGroupList type='update' name='adGroupId' value={this.state.model.adGroupId} onChange={(event)=> this._handleUserInput(event)}/>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.name}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Name</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="name" placeholder="Ad Name" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.name} />
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.clickUrl}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Click Url</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="clickUrl" placeholder="e.g. http://www.example.com" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.clickUrl} />
+                        </div>
+                    </div>
+                    <div className='row'>
+                        <div className="col-sm-offset-3 col-sm-5">
+                            <div className="panel panel-default">
+                                <div className="panel-heading"><strong>Dynamic Macros - Text Values</strong></div>
+                                <div className="panel-body">
+                                    <dl className="dl-horizontal">
+                                        <dt>Ad ID</dt>
+                                        <dd>{'{AD_ID}'}</dd>
+                                        <dt>Agency ID</dt>
+                                        <dd>{'{AGY_ID}'}</dd>
+                                        <dt>Advertiser ID</dt>
+                                        <dd>{'{AID}'}</dd>
+                                        <dt>Campaign ID</dt>
+                                        <dd>{'{CID}'}</dd>
+                                        <dt>City</dt>
+                                        <dd>{'{CITY}'}</dd>
+                                        <dt>Country Code</dt>
+                                        <dd>{'{COUNTRY}'}</dd>
+                                        <dt>DMA Region</dt>
+                                        <dd>{'{DMA}'}</dd>
+                                        <dt>Domain</dt>
+                                        <dd>{'{DOMAIN}'}</dd>
+                                        <dt>Ad Group ID</dt>
+                                        <dd>{'{GID}'}</dd>
+                                        <dt>Matched Keyword</dt>
+                                        <dd>{'{KEYWORD}'}</dd>
+                                        <dt>Keyword Category</dt>
+                                        <dd>{'{KEYWORD_CATEGORY}'}</dd>
+                                        <dt>Matched Keyword (spaces replaced with hyphens)</dt>
+                                        <dd>{'{NEAT_KEYWORD}'}</dd>
+                                        <dt>Postal/Zip Code</dt>
+                                        <dd>{'{POSTAL}'}</dd>
+                                        <dt>Product</dt>
+                                        <dd>{'{PRODUCT}'}</dd>
+                                        <dt>Searched Query</dt>
+                                        <dd>{'{QUERY}'}</dd>
+                                        <dt>State/Province</dt>
+                                        <dd>{'{REGION}'}</dd>
+                                        <dt>Site Category</dt>
+                                        <dd>{'{SITE_CATEGORY}'}</dd>
+                                        <dt>Source ID</dt>
+                                        <dd>{'{SOURCE_ID}'}</dd>
+                                        <dt>Tier</dt>
+                                        <dd>{'{TIER}'}</dd>
+                                    </dl>                                    
+                                </div>
+                            </div>
+                            <span>Note: All dynamic macros must be entered in {'{CAPITAL_LETTERS}'}</span>
+                            <br />
+                            <span>You can place these macros inside the Click URL, Display URL, Title, or Description of your ad. The macro will be dynamically replaced when the ad is displayed.</span>
+                            <br /><br />
+                        </div>
+                        <div className="col-sm-offset-1 col-sm-3">
+                            <div className="panel panel-default">
+                                <div className="panel-heading"><strong>Ad Group Details</strong></div>
+                                <div className="panel-body">
+                                    <div className='form-group row '>
+                                        <label className="col-sm-4">Name</label>
+                                        <label className="col-sm-8">{this.state.adGroup.name}</label>
+                                    </div>
+                                    <div className='form-group row '>
+                                        <label className="col-sm-4">Bid</label>
+                                        <label className="col-sm-8">{this.state.adGroup.bid}</label>
+                                    </div>
+                                    <div className='form-group row '>
+                                        <label className="col-sm-4">Daily Budget</label>
+                                        <label className="col-sm-8">{this.state.adGroup.dailyBudget}</label>
+                                    </div>
+                                    <div className='form-group row '>
+                                        <label className="col-sm-4">Duration</label>
+                                        <label className="col-sm-8">{this.state.adGroup.duration}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Conversion Pixel</label>
+                        <div className="col-sm-9">
+                            <label>{'<img src="https://conversion.adcenter.popmonetize.com/conversion/?pixel=1&amp;aid=63" height="1" width="1" >'}</label>
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Postback URL</label>
+                        <div className="col-sm-9">
+                            <label>{'https://conversion.adcenter.popmonetize.com/conversion/?s2s=1&aid=63&id=*{AD_ID}*'}</label>
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Conversion Domain</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="conversionDomain" placeholder="e.g. example.com (optional)" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.conversionDomain} />
+                        </div>
+                    </div>
+                    <div className='form-group row '>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Third Party Impression Tracking</label>
+                        <div className="col-sm-9">
+                            <textarea rows="5" className='form-control' name="thirdPartyImpressionTracking" placeholder="Add Tracking Code" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.thirdPartyImpressionTracking} />
+                            <br />
+                            <span>You may enter HTML code (<code>IMG</code> tags or <code>SCRIPT</code> tags) for any third-party trackers you may have.</span>
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <div className="col-sm-12 btn-toolbar">
+                            <button type="button" className="btn btn-default pull-right" onClick={this.props.changeView.bind(this,null,"main", this.props.adGroup)}>Cancel</button>
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._update.bind(this)}>Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        componentWillMount() {
+            if(this.props.model == null) {
+                this.setState({
+                    model: {
+                        id : -1,
+                        name : '',
+                        adGroupId: this.props.adGroup,
+                        active : true,
+                        clickUrl: '',
+                        conversionDomain: '',
+                        thirdPartyImpressionTracking: ''
+                    },
+                    adGroup: {
+                        name: '<select ad group>',
+                        bid: '<select ad group>',
+                        dailyBudget: '<select ad group>',
+                        duration: '<select ad group>'
+                    },
+                    mode: 'Create' ,
+                    errorMessage: '',
+                    formErrors: {
+                        name: '',
+                        adGroupId:'',
+                        clickUrl: ''              
+                    }
+                });
+                this._setAdGroupDescription(this.props.adGroup);
+            }
+            else {
+                this.setState({
+                    model: {
+                        id : this.props.model.Id,
+                        name : this.props.model.Name,
+                        adGroupId: this.props.model.AdGroupId,
+                        active : this.props.model.Active,
+                        clickUrl: this.props.model.ClickUrl,
+                        conversionDomain: this.props.model.ConversionDomain == null ? '' : this.props.model.ConversionDomain,
+                        thirdPartyImpressionTracking: this.props.model.ThirdPartyImpressionTracking == null ? '' : this.props.model.ThirdPartyImpressionTracking
+                    },
+                    adGroup: {
+                        name: '<select ad group>',
+                        bid: '<select ad group>',
+                        dailyBudget: '<select ad group>',
+                        duration: '<select ad group>'
+                    },
+                    mode: 'Update' ,
+                    errorMessage: '',
+                    formErrors: {
+                        name: '',
+                        adGroupId:'',
+                        clickUrl: ''              
+                    }
+                });
+                this._setAdGroupDescription(this.props.model.AdGroupId);
+            }
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.name == 'active' ? e.target.checked : e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;                    
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors;
+            let errorMsgs = this.state.formErrorMessage;
+            let model = this.state.model;
+            
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'adGroupId' :
+                    fieldErrors.adGroupId = value == '-1' ? ' has-error' : '';
+                    this._setAdGroupDescription(value);
+                    break;
+                case 'clickUrl' :
+                    fieldErrors.clickUrl= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors, formErrorMessage: errorMsgs});
+        }
+        _setAdGroupDescription(adGroupId){
+            let adGroup = this.state.adGroup;
+            if(adGroupId != '-1') {
+                let selectedAdGroup = $global.adGroups.filter(c=>c.Id == adGroupId)[0];
+                adGroup.name = selectedAdGroup.Name;
+                adGroup.bid = '$' + selectedAdGroup.Bid.toFixed(4);
+                adGroup.dailyBudget = selectedAdGroup.DailyBudget == 0 ? 'Unlimited' : '$' + selectedAdGroup.DailyBudget.toFixed(2);
+                if(selectedAdGroup.EndDate == null)
+                    adGroup.duration = 'Unlimited';
+                else {
+                    let duration = moment.duration(moment(selectedAdGroup.EndDate).diff(selectedAdGroup.StartDate));
+                    let days = duration.asDays();
+                    adGroup.duration = days + ' Day(s)';
+                }
+            }
+            else{
+                adGroup.name = '<select ad group>';
+                adGroup.bid = '<select ad group>';
+                adGroup.dailyBudget = '<select ad group>';
+                adGroup.duration = '<select ad group>';
+            }
+            this.setState({adGroup: adGroup});
+        }
+        _isValid() {
+            _.each(this.state.model,(i,e) =>{
+                this._validateField(e,this.state.model[e]);
+            });
+            return this._formIsValid();
+        }
+        _formIsValid(){
+            if(this.state.formErrors.name === '' &&
+                    this.state.formErrors.adGroupId === '' &&
+                    this.state.formErrors.clickUrl === '') 
+                return true;
+            else{
+                toastr.warning('One or more fields are currently invalid.','Validation Error');
+                return false;
+            }
+        }
+        _update() {
+            if(this._isValid()){
+                let onSuccess = this.props.changeView;
+                let adgroupid = this.props.adGroup;
+                let m = this.state.model;
+                let model = JSON.stringify(m);
+                //console.log(model);
+                $.ajax({
+                    url: $global.uriPath + '/Ads/Ad',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                    //dataType:"json"
+                }).done(function(data){
+                    onSuccess(null,"main",adgroupid);
+                }).fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });             
+            }
+        }
+    }
+    class DeleteModal extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                show: false,
+                data: ''
+            }
+        }
+        render(){
+            if(!this.state.show)
+                return null;
+            return(
+                <div className="modal fade" role="dialog" data-backdrop="static">
+                    <div className="modal-dialog modal-md" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Delete Ad</h4>
+                        </div>
+                        <div className="modal-body">
+                            <label className="alert alert-warning">Are you sure to delete "{this.state.data.Name}" ?</label>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this._hide.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={this.props.delete.bind(this,this.state.data)}>Confirm</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _show(item) {
+            this.setState({ 
+                show: true,
+                data: item
+            });
+        }
+
+        _hide() {
+            this.setState({show: false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        componentDidUpdate() {
+            var $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+    }
+    class CloneModal extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                id: -1,
+                name: '',
+                adGroupId: '',
+                show: false,
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    adGroupId: ''
+                }
+            };
+        }
+        render() {
+            if(!this.state.show)
+                return null;
+            return (
+                <div className="modal fade" role="dialog" data-backdrop="static">
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button"className="close" data-dismiss="modal" aria-label="Close" onClick={this._hide.bind(this)}><span aria-hidden="true">&times;</span></button>
+                            <h4 className="modal-title">Duplicate Ad</h4>
+                        </div>
+                        <div className="modal-body">
+                            <div className="row">
+                                <div className="col-sm-12">
+                                    <label className="label label-danger">{this.state.errorMessage}</label>
+                                </div>
+                                <div className={"form-horizontal col-sm-12 " + this.state.formErrors.name }>
+                                    <div className="control-group">
+                                        <label className="control-label">New Name</label>
+                                        <input name='name' className="form-control" value={this.state.name} onChange={(event)=> this._handleUserInput(event)} />
+                                    </div>
+                                </div>
+                                <div className={"form-horizontal col-sm-12 " + this.state.formErrors.adGroupId }>
+                                    <div className="control-group">
+                                        <label className="control-label">Parent Ad Group</label>
+                                        <AdGroupList type='update' name='adGroupId' value={this.state.adGroupId} onChange={(event)=> this._handleUserInput(event)}/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">                            
+                            <button type="button" className="btn btn-primary" onClick={this._duplicateAdGroup.bind(this,false)}><span className="glyphicon glyphicon-th-large" />Clone Ad</button>
+                            <button type="button" className="btn btn-default" onClick={this._hide.bind(this)} data-dismiss="modal">Close</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        _show(id,name,adGroupId) {
+            this.setState({
+                show: true,
+                id:id,
+                name:name,
+                adGroupId:adGroupId, 
+                errorMessage: '',
+                formErrors: {
+                    name: '',
+                    adGroupId: ''
+                }
+            });
+        }
+        _hide() {
+            this.setState({show: false});
+            $(ReactDOM.findDOMNode(this)).modal('hide');
+        }
+        _duplicateAdGroup() {
+
+            if(this.state.formErrors.name == '' && this.state.formErrors.adGroupId == ''){
+                let onSuccess = this.props.onSuccess;
+                let name = $.trim(this.state.name);
+                $.post($global.uriPath + "/Ads/Clone",{id:this.state.id, name:name, adGroupId:this.state.adGroupId})
+                .done(function(data){
+                    onSuccess();
+                })
+                .fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });
+            }
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.value;
+
+            let item = this.state;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors
+            switch(fieldName){
+                case 'name':
+                    fieldErrors.name= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'adGroupId' :
+                    fieldErrors.adGroupId =$.trim(value) === '-1' ? ' has-error' : '' ;
+                    break;
+            }
+
+            this.setState({formErrors: fieldErrors});
+        }
+        componentDidUpdate() {
+            var $dialog = $(ReactDOM.findDOMNode(this));
+            if (!$dialog.length) return;
+
+            $dialog
+                .one("hidden", this.hide)
+                .modal('show');
+        }
+    }
+    ReactDOM.render(
+        <App />, document.getElementById('reactContent')
+    );
+</script>

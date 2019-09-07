@@ -1,0 +1,476 @@
+﻿@{
+    ViewBag.Title = "Users";
+}
+
+<h3><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Users</h3>
+<script type="text/javascript">
+    var $global = window.$global = {};
+    $global.roles = @Html.Raw(ViewBag.Roles);
+    $global.uriPath = @Html.Raw(ViewBag.UriPath);
+</script>
+<div id="reactContent">
+    
+</div>
+<script type="text/babel">
+    class App extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                view: "main",
+                model: null
+            }
+        }
+        render() {
+            if(this.state.view == "main")
+                return (<MainView changeView={this._changeView.bind(this)} />);
+            if(this.state.view == "update")
+                return (<EditUserView changeView={this._changeView.bind(this)} model={this.state.model} />);
+        }
+        _changeView(model,view) {
+            this.setState({
+                view: view,
+                model: model
+            })
+        }
+    }
+    class MainView extends React.Component {
+        constructor(){
+            super();
+            this.state = {
+                filteredData: [],
+                originalData: [],
+                filterRole: '-1'
+            }
+        }
+        componentWillMount(){
+            $.get($global.uriPath + '/UserAccess/UserList', function(data){
+                this.setState({
+                    originalData: data,
+                    filteredData: data                    
+                },()=>{
+                    this._filterData();
+                });
+            }.bind(this));
+        }
+        _filterData(e){
+            let name = '';
+            let value = '';
+            if(typeof e !== 'undefined'){
+                name = e.target.name;
+                value = e.target.value;
+            }            
+
+            let filtered = [];
+            let original = this.state.originalData;            
+            let role = this.state.filterRole;
+            if(typeof e !== 'undefined')
+            {
+                switch(name)
+                {
+                    case 'filterRole':
+                        role = value;
+                        break;
+                }
+            }
+                
+            if(role == '-1')
+                filtered = original;
+            else {
+                //if(role != '-1')
+                //    filtered = original.filter(c=>c.AdGroupId == adGroup);    
+            }
+            this.setState({
+                filteredData: filtered
+            });
+            if(typeof e !== 'undefined')
+                this.setState({[name]:value});
+        }
+        render() {
+            return(
+                <div>
+                    <div className="well well-small">    
+                        <div className="form-inline btn-toolbar">                                
+                            <div className="input-group">
+                                <span className="input-group-addon">Role</span>
+                                <RoleList type='filter' name='filterRole' onChange={(event) => this._filterData(event)}/>
+                            </div>
+                            <div className="form-inline pull-right">
+                                <button type="button" className="btn btn-primary pull-left" onClick={this.props.changeView.bind(this,null,"update")}><span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;New</button>
+                            </div>                            
+                        </div>                         
+                    </div>
+                    
+                    <div  className="panel panel-default">
+                        <UserTable data={this.state.filteredData} changeView={this.props.changeView} updateStatus={this._updateStatus.bind(this)} />
+                    </div>
+                </div>
+            );
+        }
+        _updateStatus(id,value){
+            let m = {id: id, value: value };
+            let model = JSON.stringify(m);
+            //console.log(m);
+            $.ajax({
+                url: $global.uriPath + '/UserAccess/UpdateStatus',
+                type: 'POST',
+                data: model,
+                contentType:"application/json; charset=utf-8"
+            }).done((data) => {
+                let original = this.state.originalData;
+                let index = _.findIndex(original,(x) => { return x.Id == id });
+                original[index].Status = value;
+                this.setState({originalData : original}, ()=>{
+                    this._filterData();
+                });
+                toastr.success('Status for ad has been updated.', 'Update Status');
+            }).fail((xhr, textStatus, error) => {
+                toastr.error('Unable to update status. Please refresh and try again.','Update Error');
+            });                 
+        }
+    }
+    class RoleList extends React.Component {
+        render() {
+            let type = this.props.type;
+            let options = $global.roles.map(function(d){
+                return(<option key={d.Id} value={d.Id}>{d.Name}</option>);
+            });
+            if(type== 'filter')
+                options.unshift(<option key={-1} value={-1}>- All Roles -</option>);
+            return (
+                <select className="form-control" name={this.props.name} value={this.props.value} onChange={this.props.onChange}>
+                    {options}
+                </select>
+            );
+        }
+    }
+    const UserTable = (props) => {
+        if(props.data.length == 0)
+            return (<span>There is no existing user records or filter returns no result.</span>); 
+        let rows = props.data.map((d)=>
+            <tr key={d.Id}>
+                <td>{d.Id}</td>
+                <td>{d.UserName }</td>
+                <td>
+                    <div id="toggles">
+                        <input type="checkbox" name="status" className="ios-toggle" id={"checkbox" + d.Id} onChange={props.updateStatus.bind(this,d.Id,!d.Active)} defaultChecked={d.Active} />
+                        <label htmlFor={"checkbox" + d.Id} className="checkbox-label" data-off="" data-on=""></label>
+                    </div>
+                </td>
+                <td>{d.Email}</td>
+                <td>{d.PhoneNumber}</td>
+                <td>{d.Address}</td>
+                <td>{d.PaymentTerm}</td>
+                <td>${d.Balance.toFixed(2)}</td>
+                <td>${d.CreditLimit.toFixed(2)}</td>
+                <td>
+                    <a className="glyphicon glyphicon-edit" href="#" onClick={props.changeView.bind(this,d,"update")} />
+                </td>
+            </tr>
+        );
+        return (                
+            <table className="table table-bordered table-responsive">
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>UserName</td>
+                        <td>Active</td>
+                        <td>Email</td>
+                        <td>Phone Number</td>
+                        <td>Address</td>
+                        <td>Payment Term</td>
+                        <td>Balance</td>
+                        <td>Credit Limit</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>    
+        );
+    }
+    class EditUserView extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                model: {
+                    id : -1,
+                    userName : '',
+                    email: '',
+                    phoneNumber : '',
+                    address: '',
+                    password: '',
+                    paymentTerm: '',
+                    balance: 0,
+                    creditLimit: 0,
+                    roles: []
+                },
+                mode: 'Create' ,
+                errorMessage: '',
+                formErrors: {
+                    userName: '',
+                    email:'',
+                    password: '',
+                    balance: '',
+                    creditLimit: ''              
+                }
+            }
+        }
+        render() {
+            return(
+                <div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <h4>{this.state.mode} User</h4>
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <div className='col-sm-12'>
+                            <label className="label label-danger">{this.state.errorMessage}</label>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.userName}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Username</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="userName" placeholder="username" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.userName} />
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.userName}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Email</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="email" placeholder="test@domain.com" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.email} />
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.phoneNumber}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Phone Number</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="phoneNumber" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.phoneNumber} />
+                        </div>
+                    </div>
+                    <div className={ 'form-group row '}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Address</label>
+                        <div className="col-sm-9">
+                            <textarea rows="5" className='form-control' name="address" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.address} />
+                        </div>
+                    </div>
+                    <div className={ 'form-group row '}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Payment Term</label>
+                        <div className="col-sm-9">
+                            <select className='form-control' name="paymentTerm" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.paymentTerm}>
+                                <option value="PrePay">PrePay</option>
+                                <option value="Invoice">Invoice</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.balance}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Balance</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="balance" type="number" step="0.01" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.balance} />
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.creditLimit}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Credit Limit</label>
+                        <div className="col-sm-9">
+                            <input className='form-control' name="creditLimit" type="number" step="0.01" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.creditLimit} />
+                        </div>
+                    </div>
+                    <div className={ 'form-group row ' + this.state.formErrors.password}>
+                        <label htmlFor="inputName" className="col-sm-3 col-form-label">Password</label>
+                        <div className="col-sm-9">
+                            <input type='text' className='form-control' name="password" onChange={(event)=> this._handleUserInput(event)} value={this.state.model.password} />
+                            {this.state.mode != 'Create' &&
+                                <h6>* enter to reset password or leave blank</h6>
+                            }                            
+                        </div>
+                    </div>
+                    <div className={ 'form-group row '}>
+                        <label htmlFor="roles" className="col-sm-3 col-form-label">Roles</label>
+                        <div className="col-sm-9">
+                            <RoleCheckbox ref="roles" selected={this.state.model.roles}/>
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <div className="col-sm-12 btn-toolbar">
+                            <button type="button" className="btn btn-default pull-right" onClick={this.props.changeView.bind(this,null,"main")}>Cancel</button>
+                            <button type="button" className="btn btn-primary pull-right" onClick={this._update.bind(this)}>Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        componentWillMount() {
+            if(this.props.model == null){
+                this.setState({
+                    model: {
+                        id : -1,
+                        userName : '',
+                        email: '',
+                        phoneNumber : '',
+                        address: '',
+                        password: '',
+                        paymentTerm: '',
+                        balance: 0,
+                        creditLimit: 0,
+                        roles: []
+                    },
+                    mode: 'Create' ,
+                    errorMessage: '',
+                    formErrors: {
+                        userName: '',
+                        email:'',
+                        password: '' ,
+                        balance: '',
+                        creditLimit: ''                  
+                    }
+                });
+            }
+            else {
+                let m = this.props.model;
+                this.setState({
+                    model: {
+                        id : m.Id,
+                        userName : m.UserName,
+                        email: m.Email,
+                        phoneNumber : m.PhoneNumber == null ? '' : m.PhoneNumber,
+                        address: m.Address == null ? '' : m.Address,
+                        password: '',
+                        paymentTerm : m.PaymentTerm == null ? '' : m.PaymentTerm,
+                        balance: m.Balance,
+                        creditLimit: m.CreditLimit,
+                        roles: m.Roles.map((d) => d.RoleId)
+                    },
+                    mode: 'Update' ,
+                    errorMessage: '',
+                    formErrors: {
+                        userName: '',
+                        email:'',
+                        password: '',
+                        balance: '',
+                        creditLimit: ''           
+                    }
+                });
+            }
+        }
+        _handleUserInput (e) {
+            const name = e.target.name;
+            const value = e.target.value;
+
+            let item = this.state.model;
+            _.each(item, function(i,e){
+                if(e === name)
+                    item[e] = value;                    
+            });
+            this.setState({item: item}, () => this._validateField(name,value));
+        }
+        _validateField(fieldName,value){
+            let fieldErrors = this.state.formErrors;
+            let errorMsgs = this.state.formErrorMessage;
+            
+            switch(fieldName){
+                case 'userName':
+                    fieldErrors.userName= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'email' :
+                    fieldErrors.email = $.trim(value) === '' ? ' has-error' : '';
+                    break;
+                case 'password' :
+                    if(this.state.mode == 'Create')
+                        fieldErrors.password= $.trim(value) === '' ? ' has-error' : '' ;
+                    break;
+                case 'balance' :
+                    fieldErrors.balance = $.trim(value) === '' ? '' : parseFloat(value) < 0 ? ' has-error' : '';
+                    break;
+                case 'creditLimit' :
+                    fieldErrors.balance = $.trim(value) === '' ? '' : parseFloat(value) < 0 ? ' has-error' : '';
+                    break;    
+            }
+
+            this.setState({formErrors: fieldErrors, formErrorMessage: errorMsgs});
+        }
+        _isValid() {
+            _.each(this.state.model,(i,e) =>{
+                this._validateField(e,this.state.model[e]);
+            });
+            return this._formIsValid();
+        }
+        _formIsValid(){
+            if(this.state.formErrors.userName === '' &&
+                    this.state.formErrors.email === '' &&
+                    this.state.formErrors.password === '' &&
+                    this.state.formErrors.balance === '' &&
+                    this.state.formErrors.creditLimit === '' )
+                {
+                    let model = this.state.model;
+                    model.roles = this.refs.roles._getSelectedRoles();
+                    this.setState(model: model);
+                    return true;
+                }                 
+            else{
+                toastr.warning('One or more fields are currently invalid.','Validation Error');
+                return false;
+            }
+        }
+        _update() {
+            if(this._isValid()){
+                let onSuccess = this.props.changeView;
+                let m = this.state.model;
+                m.balance = $.trim(m.balance) === '' ? 0 : m.balance;
+                m.creditLimit = $.trim(m.creditLimit) === '' ? 0 : m.creditLimit;
+                let model = JSON.stringify(m);
+                //console.log(model);
+                $.ajax({
+                    url: $global.uriPath + '/UserAccess/User',
+                    type: 'POST',
+                    data: model,
+                    contentType:"application/json; charset=utf-8"
+                    //dataType:"json"
+                }).done(function(data){
+                    onSuccess(null,"main");
+                }).fail((xhr, textStatus, error) => {
+                    this.setState({errorMessage : error});
+                });             
+            }
+        }
+    }
+    class RoleCheckbox extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                selectedRoles:  this.props.selected
+            }
+        }
+        render() {
+            let options = $global.roles.map((d) =>{
+                return(<div className="checkbox"  key={d.Id}>
+                    <label>
+                        <input type="checkbox" name={d.Name} value={d.Id} onChange={(event)=> this._toggleCheckbox(event,d.Id)} defaultChecked={this.state.selectedRoles.indexOf(d.Id) !== -1 ? true : false }/>
+                        {d.Name}
+                    </label>
+                </div>);
+            });
+            return(
+                <div>
+                    {options}
+                </div>               
+                );
+        }
+        _toggleCheckbox(e,id) {
+            const name = e.target.name;
+            const value = e.target.checked;
+            let roles = this.state.selectedRoles;
+            if(value)
+                roles.push(id);
+            else
+                roles = $.grep(roles, function(e){
+                    return e != id;
+                });
+            this.setState({ selectedRoles : roles });
+        }
+        _getSelectedRoles(){
+            return this.state.selectedRoles;
+        }
+    }
+    ReactDOM.render(
+        <App />, document.getElementById('reactContent')
+    );
+</script>
